@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+inference/models/
+inference/wheels/
+work/
+*.zarr/
