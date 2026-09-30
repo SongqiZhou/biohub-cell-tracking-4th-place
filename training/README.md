@@ -33,7 +33,24 @@ which are subsampled), and so are the loss and the gradient norm. The out-of-fol
 reproduces our files exactly, up to one node in 60,000 that moves by one voxel through non-deterministic GPU
 reductions. Retraining will not give bit-identical weights (GPU non-determinism), only the same recipe.
 
-## 2. Downstream models
+## 2. Linking: cell embedding and edge model
 
-Being written up: edge transformer, cell embedding, edge model, division CNN, division graph and pair models, fork
-verifier.
+`run_link.sh` builds the training data of the linking stage and fits its models:
+
+| step | what | output |
+|---|---|---|
+| 1 | out-of-fold node set of the 199 movies: fold 3D Net-128 refined by 3D Net-128-PL; DoG spacing >= 19.0 um -> seed threshold 0.99 | `work/link/det` |
+| 2 | candidate links, 26 edge features, ground-truth link labels (`link_labels.py`) | `work/link/{nodes,cand_pool,feat,labels}` |
+| 3 | out-of-fold transformer link probabilities from the five fold edge transformers | `work/link/edges_tf_*` |
+| 4 | cell embedding: labelled pairs, two out-of-fold encoders (movies split by sorted name into halves), and the deployed encoder on all movies (`train_cell_embedding.py`) | `work/link/edges_embed`, `cell_embedding.pt` |
+| 5 | edge model: LightGBM, 600 trees, learning rate 0.05, 63 leaves (`fit_edge_model.py`) | `edge_lgbm/` |
+
+**Checks.** Each step reproduces the files we trained with: the out-of-fold nodes and scores, the candidate links,
+features and labels, the out-of-fold transformer and embedding columns, the pair patches and the node embeddings are
+identical. Refitting the edge model on our original training table gives the same 639,118 labelled links and
+predictions that agree with the deployed model to 3e-14.
+
+## 3. Still being written up
+
+The edge transformer (the competition baseline's linker, retrained), the division CNN, the division graph and pair
+models, and the fork verifier.

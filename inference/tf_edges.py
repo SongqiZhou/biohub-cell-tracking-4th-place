@@ -77,13 +77,16 @@ def score_movie(model, W, ds, zarr_path, z, I, J, device, harm_w=0.15):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('--nodes', required=True); ap.add_argument('--cand', required=True); ap.add_argument('--test', required=True)
-    ap.add_argument('--weights', required=True); ap.add_argument('--out-root', required=True); ap.add_argument('--gpu', type=int, default=0); a = ap.parse_args()
+    ap.add_argument('--weights', required=True); ap.add_argument('--out-root', required=True); ap.add_argument('--gpu', type=int, default=0)
+    ap.add_argument('--movies', default='', help='comma-separated subset (default: all movies in --nodes)'); a = ap.parse_args()
     device = torch.device(f'cuda:{a.gpu}'); torch.cuda.set_device(device)
     model, W, ds = load_edge_transformer(Path(a.weights), device)
     outs = {k: Path(a.out_root) / f'edges_tf_{k}' for k in ('fwd', 'rev', 'harm')}
     for p in outs.values():
         p.mkdir(parents=True, exist_ok=True)
     files = sorted(glob.glob(f'{a.nodes}/*.npz'))
+    if a.movies:
+        files = [f for f in files if Path(f).stem in set(a.movies.split(','))]
     for i, f in enumerate(files, 1):
         z = np.load(f); c = np.load(f'{a.cand}/{Path(f).name}'); name = Path(f).stem
         out = score_movie(model, W, ds, Path(a.test) / f'{name}.zarr', z, c['I'], c['J'], device)
