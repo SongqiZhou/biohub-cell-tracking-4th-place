@@ -28,10 +28,7 @@ from scipy.spatial import cKDTree
 from common import topk_edges
 from division_features import NAMES as GRAPH_NAMES, build_arrays
 
-ap = argparse.ArgumentParser(); ap.add_argument('--nodes', required=True); ap.add_argument('--edges', required=True); ap.add_argument('--harm', required=True)
-ap.add_argument('--emb', required=True); ap.add_argument('--div-dir', required=True); ap.add_argument('--cat', required=True); ap.add_argument('--test', required=True)
-ap.add_argument('--models', required=True); ap.add_argument('--out', required=True); ap.add_argument('--jobs', type=int, default=4); ap.add_argument('--pmin', type=float, default=0.02)
-A = ap.parse_args()
+A = None                                                             # command-line arguments (main)
 SC = np.array([1.625, .40625, .40625], np.float32)
 
 
@@ -104,8 +101,9 @@ def triplet_features(H, hq, hist_pos, D, dpos, pm, l0, l1, dens10, dens20):
     return np.stack(list(f.values()), 1).astype(np.float32)
 
 
-def candidate_triplets(t, um, tab, tabn):
-    """-> (mothers, rows (n, 3) = [mother row, daughter a, daughter b], features (n, 174))"""
+def candidate_triplets(t, um, tab, tabn, mothers=None):
+    """-> (mothers, rows (n, 3) = [mother row, daughter a, daughter b], features (n, 174)); mothers: node indices to consider
+    (sorted; default every node before the last frame)"""
     T = int(t.max()) + 1; frames = {tt: np.where(t == tt)[0] for tt in range(T)}; trees = {tt: (cKDTree(um[ks]) if len(ks) else None) for tt, ks in frames.items()}
 
     def nearest(tt, P, r):
@@ -113,7 +111,8 @@ def candidate_triplets(t, um, tab, tabn):
         if tt < 0 or tt >= T or trees[tt] is None or len(P) == 0:
             return out
         d, j = trees[tt].query(P); ok = d <= r; out[ok] = frames[tt][j[ok]]; return out
-    mothers = np.where(t < T - 1)[0]
+    if mothers is None:
+        mothers = np.where(t < T - 1)[0]
     chain_pos = np.zeros((len(mothers), 7, 3)); chain_idx = np.full((len(mothers), 7), -1, int); chain_pos[:, 0] = um[mothers]; chain_idx[:, 0] = mothers
     for k in range(1, 7):                                            # mother history by nearest node within 4 um
         prev = chain_pos[:, k - 1]; idx = np.full(len(mothers), -1, int)
@@ -213,11 +212,11 @@ def link_features(N, I, J, P, HK, HP, emb, u, d1, d2):
                      ob1, ob2, no1, no2, cos(u, d1, d1 >= 0), cos(u, d2, d2 >= 0), cos(d1, d2, (d1 >= 0) & (d2 >= 0)), f1, f2], 1).astype(np.float32)
 
 
-def graph_features(name, t, vox, I, J, P):
+def graph_features(name, t, vox, I, J, P, div_dir, pmin=0.02):
     """the 53 division features on the learned links with p >= pmin"""
-    coords = np.concatenate([t[:, None], np.rint(vox)], 1).astype(np.int32); keep = P >= A.pmin; i, j, p = I[keep], J[keep], P[keep]
+    coords = np.concatenate([t[:, None], np.rint(vox)], 1).astype(np.int32); keep = P >= pmin; i, j, p = I[keep], J[keep], P[keep]
     edges = np.stack([i, j, p, np.linalg.norm(vox[j] - vox[i], axis=1)], 1).astype(np.float64)
-    X, rc = build_arrays(coords, edges, name, A.div_dir)
+    X, rc = build_arrays(coords, edges, name, div_dir)
     assert np.array_equal(rc, coords) and X.shape == (len(coords), len(GRAPH_NAMES)), name
     return np.nan_to_num(X.astype(np.float32)), coords
 
@@ -239,7 +238,7 @@ def one(f):
     e = np.load(os.path.join(A.edges, name + '.npz')); I, J, P = e['I'].astype(np.int64), e['J'].astype(np.int64), e['p'].astype(np.float64)
     h = np.load(os.path.join(A.harm, name + '.npz')); HK = h['I'].astype(np.int64) * N + h['J'].astype(np.int64); ho = np.argsort(HK); HK = HK[ho]; HP = h['p'].astype(np.float64)[ho]
     E = np.load(os.path.join(A.emb, name + '.npy')).astype(np.float64); assert len(E) == N, (name, len(E), N)
-    XP, coords = graph_features(name, t, vox, I, J, P); XE = embedding_features(N, I, J, P, E.astype(np.float32))
+    XP, coords = graph_features(name, t, vox, I, J, P, A.div_dir, A.pmin); XE = embedding_features(N, I, J, P, E.astype(np.float32))
     tab, tabn = tables(os.path.join(A.test, name + '.zarr'), t, um); mothers, R, X = candidate_triplets(t, um, tab.astype(np.float64), tabn.astype(np.float64))
     s = np.zeros(N, np.float32)
     if len(R):
@@ -253,6 +252,10 @@ def one(f):
 
 
 if __name__ == '__main__':
+    ap = argparse.ArgumentParser(); ap.add_argument('--nodes', required=True); ap.add_argument('--edges', required=True); ap.add_argument('--harm', required=True)
+    ap.add_argument('--emb', required=True); ap.add_argument('--div-dir', required=True); ap.add_argument('--cat', required=True); ap.add_argument('--test', required=True)
+    ap.add_argument('--models', required=True); ap.add_argument('--out', required=True); ap.add_argument('--jobs', type=int, default=4); ap.add_argument('--pmin', type=float, default=0.02)
+    A = ap.parse_args()
     os.makedirs(A.out, exist_ok=True); files = sorted(glob.glob(os.path.join(A.nodes, '*.npz')))
     with ProcessPoolExecutor(A.jobs) as ex:
         for name, npairs in ex.map(one, files):

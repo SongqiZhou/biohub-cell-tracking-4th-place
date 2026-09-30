@@ -68,6 +68,32 @@ The weights of the last epoch are used. The patch changes nothing in the model o
 
 Run this before `run_link.sh`.
 
-## 4. Still being written up
+## 4. Division models
 
-The division CNN, the division graph and pair models, and the fork verifier.
+`run_division.sh` trains the three parts of the division prior. It needs the fold 3D Nets, the fold edge transformers and
+the linking stage's work directory (`work/link`).
+
+| step | what | output |
+|---|---|---|
+| 1 | division CNN: 5-frame patches at the annotated nodes with at least one child (128,732 patches, 151 divisions; `division_patches.py`); three plain and three copy-paste networks on all movies, and two of each per half of the movies (`train_division_cnn.py`) | `division_cnn/`, `work/div/cnn_oof` |
+| 2 | a second out-of-fold node set with the seed threshold 0.97 in every movie, its candidate links, features, labels and out-of-fold transformer probabilities; out-of-fold link probabilities of an edge model without the embedding column (two halves, `fit_edge_model.py --oof`) | `work/div` |
+| 3 | division CatBoost: each half scored by the plain and the copy-paste CNNs that did not see it (averaged), division features on the candidate graphs (links with p >= 0.02; `candidate_graphs.py`), fit (`fit_division_cat.py`) | `division_cat.cbm` |
+| 4 | pair model, on `work/link`: out-of-fold link probabilities of the edge model with and without the embedding column, out-of-fold scores of the plain CNNs, 200 random non-mother nodes per movie as negatives (`train_division_pair.py`) | `division_pair/` |
+
+The training inputs listed above are the ones the deployed models were trained with, including where they differ from the
+inference inputs (the 0.97 node set and the edge model without embedding for the CatBoost; plain-CNN scores for the pair
+model's graph features). `inference/division_pair.py` provides the triplet, embedding and link features to the trainer.
+
+**Checks.** The extracted patches are identical to ours. With deterministic cuDNN, the CNN training code gives the same
+weights as our original trainer, and the copy-paste synthesis the same patches; the deployed networks were trained without
+deterministic cuDNN, so a retrained CNN follows the same recipe but has different weights. Given our inputs, the
+out-of-fold link probabilities (with `--n-jobs 48`, as used), the candidate graphs, the CNN scores, their average and the
+division features are identical to ours, and refitting the division CatBoost reproduces the deployed model exactly. For
+the pair model, the training table (labels and all 261 features) is identical to ours for the same negatives. The
+negatives of the deployed model were drawn with a per-movie seed taken from Python's randomised string hash, which
+cannot be recovered; the script seeds them with the CRC32 of the movie name instead, so a retrained pair model differs
+from the deployed one by its negative sample.
+
+## 5. Still being written up
+
+The fork verifier.
