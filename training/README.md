@@ -50,7 +50,24 @@ features and labels, the out-of-fold transformer and embedding columns, the pair
 identical. Refitting the edge model on our original training table gives the same 639,118 labelled links and
 predictions that agree with the deployed model to 3e-14.
 
-## 3. Still being written up
+## 3. Edge transformer
 
-The edge transformer (the competition baseline's linker, retrained), the division CNN, the division graph and pair
-models, and the fork verifier.
+The linker of the competition baseline (royerlab/kaggle-cell-tracking-competition, commit `075fc5f`, BSD-3), retrained
+with our folds. `edge_transformer/run.sh` clones the baseline, applies `edge_transformer/baseline.patch` and trains six
+models (6 epochs each, lr 1e-4, batch 8, window 2, 5 um pooling, brightness + flip augmentation, seed 314159):
+
+| split in `edge_transformer/splits.json` | training movies | output |
+|---|---|---|
+| 4 | all 199 | `models/edge_transformer/` (deployed) |
+| 6 + k, k = 0..4 | all but fold k | `runs/edge_transformer_fold<k>/` (out-of-fold link probabilities, `run_link.sh` step 3) |
+
+The weights of the last epoch are used. The patch changes nothing in the model or the loss; it only
+* seeds the global torch / numpy generators as well (model initialisation and dropout), not only the data order,
+* saves the weights of every epoch as `edge_predictor_last.pth` next to the baseline's "best" checkpoint,
+* adds `--seed` and `--augment` to the command line.
+
+Run this before `run_link.sh`.
+
+## 4. Still being written up
+
+The division CNN, the division graph and pair models, and the fork verifier.

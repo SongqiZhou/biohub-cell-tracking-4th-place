@@ -1,0 +1,59 @@
+diff --git a/scripts/train_unet_transformer.py b/scripts/train_unet_transformer.py
+index 67522ae..34a69b0 100644
+--- a/scripts/train_unet_transformer.py
++++ b/scripts/train_unet_transformer.py
+@@ -1099,6 +1099,10 @@ def train(
+     g = None
+     worker_init_fn = None
+     if seed is not None:
++        # Seed the global RNGs too, so that model initialisation and dropout are
++        # reproducible, not only the DataLoader shuffling order.
++        torch.manual_seed(seed)
++        np.random.seed(seed % 2**32)
+         g = torch.Generator()
+         g.manual_seed(seed)
+ 
+@@ -1188,6 +1192,11 @@ def train(
+                 {k.replace("unet.module.", "unet.", 1): v for k, v in model.state_dict().items()},
+                 save_path,
+             )
++        # Always keep the weights of the most recent epoch as well.
++        torch.save(
++            {k.replace("unet.module.", "unet.", 1): v for k, v in model.state_dict().items()},
++            output_dir / "edge_predictor_last.pth",
++        )
+ 
+         marker = "*" if is_best else " "
+         pbar.set_postfix(edge=f"{edge_loss:.4f}", det=f"{det_loss:.4f}", acc=f"{test_acc:.4f}")
+@@ -1252,9 +1261,22 @@ def main() -> None:
+                              "when more than one is available (default: on).")
+     parser.add_argument("--single-gpu", dest="data_parallel", action="store_false",
+                         help="Disable multi-GPU; train on cuda:0 only.")
++    parser.add_argument("--seed", type=int, default=None,
++                        help="Random seed for model initialisation, dropout and data "
++                             "shuffling (default: unseeded).")
++    parser.add_argument("--augment", type=str, default="brightness,flip",
++                        help="Comma-separated training augmentations: brightness, flip, "
++                             "or 'none' (default: brightness,flip).")
+ 
+     args = parser.parse_args()
+ 
++    aug_registry = {"brightness": brightness_augment, "flip": flip_augment}
++    aug_names = [x.strip() for x in args.augment.split(",") if x.strip() and x.strip() != "none"]
++    unknown = sorted(set(aug_names) - set(aug_registry))
++    if unknown:
++        parser.error(f"unknown augmentation(s): {unknown}; choose from {sorted(aug_registry)} or 'none'")
++    augmentations = [aug_registry[x] for x in aug_names]
++
+     from dataspec import DATASET_PATH
+     data_dir = Path(args.data_dir) if args.data_dir else Path(DATASET_PATH)
+     splits_file = Path(args.splits) if args.splits else data_dir / "dataset_splits.json"
+@@ -1287,6 +1309,8 @@ def main() -> None:
+             window_size=args.window_size,
+             pool_kernel_um=args.pool_kernel_um,
+             data_parallel=args.data_parallel,
++            augmentations=augmentations,
++            seed=args.seed,
+         )
+ 
+ 
