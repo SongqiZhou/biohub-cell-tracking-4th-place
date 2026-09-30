@@ -94,6 +94,20 @@ negatives of the deployed model were drawn with a per-movie seed taken from Pyth
 cannot be recovered; the script seeds them with the CRC32 of the movie name instead, so a retrained pair model differs
 from the deployed one by its negative sample.
 
-## 5. Still being written up
+## 5. Fork verifier
 
-The fork verifier.
+`run_fork.sh` trains the fork verifier from the official annotations only. Its training forks come from the tracking
+stage itself, run on the training movies with out-of-fold inputs, so that the verifier sees forks like the ones it
+checks at inference.
+
+| step | what | output |
+|---|---|---|
+| 1 | density bands of the training movies as at inference (DoG spacing >= 19.7 um is sparse) | `work/fork/route.json` |
+| 2 | out-of-fold division prior on `work/link`: each half scored by the CNNs, the division CatBoost and the pair model trained without it (`--half`), MAX-combined | `work/fork/div_prior` |
+| 3 | tracking ILP with the deployed settings | `work/fork/graph` |
+| 4 | rows (`fork_rows.py`): every fork of the solved graphs, labelled by the competition's division score; and candidate events (the three pairs of the three most probable children of every node with prior >= 0.02), labelled by the annotations | `work/fork/rows` |
+| 5 | two CatBoost verifiers, each trained on one half of the movies, with a logistic calibration fitted on inner out-of-fold scores of the forks (`train_fork_verifier.py`) | `fork_verifier/{a,b}` |
+
+The verifier features are the image traces of `inference/fork_verify.py` (117 separation / peak / displacement
+features and 40 separation-trend features). The official division score comes from the baseline package installed
+for the edge transformer (`tracking_cellmot.division_metrics`).

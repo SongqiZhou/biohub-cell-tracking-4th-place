@@ -19,7 +19,7 @@ LightGBM (500 rounds, lr 0.03, 15 leaves) and CatBoost (600 trees, depth 6) are 
 import argparse
 import collections
 import glob
-import os
+import subprocess
 import sys
 import zlib
 from concurrent.futures import ProcessPoolExecutor
@@ -94,8 +94,12 @@ def main():
     for k in ('nodes', 'gt', 'edges', 'edges-noemb', 'harm', 'emb', 'div-dir', 'test', 'out'):
         ap.add_argument(f'--{k}', required=True)
     ap.add_argument('--neg', type=int, default=200); ap.add_argument('--jobs', type=int, default=24)
+    ap.add_argument('--half', type=int, default=-1, choices=[-1, 0, 1], help='leave out this half of the movies (training/fold_movies.py --half)')
     A = ap.parse_args()
     names = sorted(Path(f).stem for f in glob.glob(f'{A.nodes}/*.npz'))
+    if A.half >= 0:
+        held = set(subprocess.run([sys.executable, str(HERE / 'fold_movies.py'), '--half', str(A.half)], capture_output=True, text=True, check=True).stdout.strip().split(','))
+        names = [n for n in names if n not in held]
     with ProcessPoolExecutor(A.jobs) as ex:
         res = [(y, F) for _, y, F in ex.map(movie_rows, names) if F is not None]
     y = np.concatenate([r[0] for r in res]); X = np.nan_to_num(np.concatenate([r[1] for r in res]).astype(np.float64), nan=-1.0)

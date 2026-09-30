@@ -10,6 +10,7 @@ learning rate 0.05, class weights SqrtBalanced, seed 0.
 """
 import argparse
 import glob
+import subprocess
 import sys
 from pathlib import Path
 
@@ -23,10 +24,16 @@ from link_labels import annotated_graph  # noqa: E402
 
 ap = argparse.ArgumentParser(); ap.add_argument('--cand', required=True); ap.add_argument('--div-dir', required=True)
 ap.add_argument('--labels', required=True, help='link_labels.py output (gt_match per node)'); ap.add_argument('--gt', required=True)
-ap.add_argument('--out', required=True); a = ap.parse_args()
+ap.add_argument('--out', required=True)
+ap.add_argument('--half', type=int, default=-1, choices=[-1, 0, 1], help='leave out this half of the movies (training/fold_movies.py --half)'); a = ap.parse_args()
+held = set()
+if a.half >= 0:
+    held = set(subprocess.run([sys.executable, str(HERE / 'fold_movies.py'), '--half', str(a.half)], capture_output=True, text=True, check=True).stdout.strip().split(','))
 Xs, ys = [], []
 for cp in sorted(glob.glob(f'{a.cand}/*.candidates.npz')):
     name = Path(cp).name.replace('.candidates.npz', '')
+    if name in held:
+        continue
     X, coords = build(cp, a.div_dir)
     gm = np.load(Path(a.labels) / f'{name}.npz')['gt_match']
     gt_t, _, gt_e = annotated_graph(Path(a.gt) / f'{name}.geff')

@@ -97,6 +97,7 @@ if __name__ == '__main__':
         loc = np.clip(np.searchsorted(keys[order], E0[:, 0] * n0 + E0[:, 1]), 0, len(order) - 1); hit = keys[order[loc]] == E0[:, 0] * n0 + E0[:, 1]
         conf = np.where(hit, ee['p'][order[loc]], 0.0)[keep[E0[:, 0]] & keep[E0[:, 1]]]
         nodes, velocity = stabilized_linefit(nodes, E, conf, a.linefit, 0.8)
-        np.savez_compressed(Path(a.graph_out) / f'{name}.npz', nodes=nodes.astype(np.float32), E=E, p=conf.astype(np.float32), velocity=velocity.astype(np.float32))
+        np.savez_compressed(Path(a.graph_out) / f'{name}.npz', nodes=nodes.astype(np.float32), E=E, p=conf.astype(np.float32), velocity=velocity.astype(np.float32),
+                            node_index=np.flatnonzero(keep))
         lines += submission_rows(name, nodes, E)
     Path(a.out).write_text('\n'.join(lines) + '\n'); print('wrote', a.out, flush=True)
