@@ -96,9 +96,32 @@ from the deployed one by its negative sample.
 
 ## 5. Fork verifier
 
-`run_fork.sh` trains the fork verifier from the official annotations only. Its training forks come from the tracking
-stage itself, run on the training movies with out-of-fold inputs, so that the verifier sees forks like the ones it
-checks at inference.
+There are two ways to train it. The released weights (`models/fork_verifier`) come from the first one, which also uses
+hand labels; the second one uses the official annotations only.
+
+### 5a. Released verifier: annotations + hand labels
+
+`training/fork_verifier/` holds its training events:
+
+| file | content |
+|---|---|
+| `events.npz` | 152 forks of a tracking run on the out-of-fold node set, labelled by the competition's division score, and 2,034 candidate mother / daughter-pair events labelled by the annotations (mother frame, daughter positions, label) |
+| `hand_labels.csv` | hand labels: our models proposed candidate divisions in 40 training movies and we checked each candidate by eye: 274 divisions, 135 rejected, 396 undecided (not used). All 40 are training movies; one of them (`44b6_0b24845f`) is also among the four example movies of the test folder, which are copies of training movies. No hidden test data was labelled. |
+| `motion.npz` | per-movie frame-to-frame translation used to compensate common motion in the image traces |
+
+```bash
+python training/fork_verifier_rows.py --data data/train --out work/fork_released/rows       # image traces of all events
+python training/train_fork_verifier.py --rows work/fork_released/rows --out models/fork_verifier
+```
+
+Each of the two verifiers is trained on one half of the movies (minus a fifth for calibration). This reproduces the
+released weights exactly (identical predictions and calibration); they are used with the drop threshold 0.25.
+`fork_verifier_rows.py --no-hand-labels` gives the same recipe without the hand labels.
+
+### 5b. Official annotations only
+
+`run_fork.sh` builds everything from the official annotations. Its training forks come from the tracking stage itself, run
+on the training movies with out-of-fold inputs only:
 
 | step | what | output |
 |---|---|---|
@@ -106,8 +129,21 @@ checks at inference.
 | 2 | out-of-fold division prior on `work/link`: each half scored by the CNNs, the division CatBoost and the pair model trained without it (`--half`), MAX-combined | `work/fork/div_prior` |
 | 3 | tracking ILP with the deployed settings | `work/fork/graph` |
 | 4 | rows (`fork_rows.py`): every fork of the solved graphs, labelled by the competition's division score; and candidate events (the three pairs of the three most probable children of every node with prior >= 0.02), labelled by the annotations | `work/fork/rows` |
-| 5 | two CatBoost verifiers, each trained on one half of the movies, with a logistic calibration fitted on inner out-of-fold scores of the forks (`train_fork_verifier.py`) | `fork_verifier/{a,b}` |
+| 5 | two verifiers on all movies (`train_fork_verifier.py --all-movies`) | `fork_verifier_official/{a,b}` |
 
-The verifier features are the image traces of `inference/fork_verify.py` (117 separation / peak / displacement
-features and 40 separation-trend features). The official division score comes from the baseline package installed
-for the edge transformer (`tracking_cellmot.division_metrics`).
+Use these weights with the drop threshold 0.40 (`downstream.py --fork-thr 0.40`).
+
+### Comparison
+
+Late submissions, identical to the final submission except for the fork verifier:
+
+| fork verifier | public | private |
+|---|---|---|
+| released: annotations + hand labels (5a), threshold 0.25 | 0.96987 | 0.96234 |
+| annotations only, recipe of 5a (each model on half of the movies), threshold 0.385 | 0.96750 | 0.96203 |
+| annotations only, 5b (models on all movies), threshold 0.40 | 0.96816 | 0.96297 |
+
+Without hand labels the verifier is about 0.0017 lower on the public and slightly higher on the private leaderboard; with
+half of the movies per model it is lower on both. The verifier features are the image traces of `inference/fork_verify.py`
+(117 separation / peak / displacement features and 40 separation-trend features); the official division score comes from
+the baseline package installed for the edge transformer (`tracking_cellmot.division_metrics`).

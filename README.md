@@ -36,6 +36,13 @@ One external embryo, the public Ultrack `zebrafish_embryo` light-sheet volume (n
 it makes up 34% of the training windows and 30% of the pseudo-label nodes. All other models use the 199 competition
 training movies only. Details in `external_data/README.md`.
 
+## Hand labels
+
+The fork verifier of the final submission is also trained on 409 hand labels: candidate divisions in 40 training movies,
+proposed by our models and checked by eye (274 divisions, 135 rejections). They and the verifier's other training events
+are in `training/fork_verifier/`; a verifier trained from the official annotations only scores about 0.0017 lower on the
+public and slightly higher on the private leaderboard. Details in `training/README.md`, section 5.
+
 ## Acknowledgements and licences
 
 - The 3D Net backbone is adapted from a dual-encoder 3D U-Net with temporal attention from the literature; the unit

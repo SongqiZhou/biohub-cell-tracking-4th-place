@@ -1,5 +1,6 @@
 #!/bin/bash
-# Fork verifier. Its training forks come from the tracking stage run on the training movies with out-of-fold inputs only:
+# Fork verifier from the official annotations only (no hand labels; the released verifier: fork_verifier_rows.py, see
+# training/README.md). Its training forks come from the tracking stage run on the training movies with out-of-fold inputs only:
 # out-of-fold link probabilities, CNN scores and a division prior whose two models are fitted on the other half of the
 # movies. Needs run_link.sh and run_division.sh (work/link, work/div) and the baseline package (training/edge_transformer)
 # for the official division score.
@@ -36,7 +37,7 @@ done
 $PY inference/ilp_solve.py --nodes $L/nodes --edges $L/edges_oof --div-dir $F/div_prior --alt-dir $L/edges_tf_harm --alt-min-divs 0.2 \
     --div-costs 6,16,0.5 --sparse-div-costs 5,16,0.5 --route $F/route.json --out $F/pred.csv --graph-out $F/graph --jobs 16
 
-# 4. Rows and the two verifiers.
+# 4. Rows and the two verifiers, both trained on all movies (use them with drop threshold 0.40: downstream.py --fork-thr 0.40).
 $PY training/fork_rows.py --graph $F/graph --nodes $L/nodes --labels $L/labels --edges $L/edges_oof --prior $F/div_prior --gt data/train \
     --data data/train --out $F/rows
-$PY training/train_fork_verifier.py --rows $F/rows --out $M/fork_verifier
+$PY training/train_fork_verifier.py --rows $F/rows --out $M/fork_verifier_official --all-movies
