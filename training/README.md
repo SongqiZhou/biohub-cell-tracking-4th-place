@@ -141,9 +141,13 @@ Late submissions, identical to the final submission except for the fork verifier
 |---|---|---|
 | released: annotations + hand labels (5a), threshold 0.25 | 0.96987 | 0.96234 |
 | annotations only, recipe of 5a (each model on half of the movies), threshold 0.385 | 0.96750 | 0.96203 |
+| annotations only, models on nearly all movies, threshold 0.25 (the released verifier's) | 0.96414 | 0.96163 |
 | annotations only, 5b (models on all movies), threshold 0.40 | 0.96816 | 0.96297 |
 
-Without hand labels the verifier is about 0.0017 lower on the public and slightly higher on the private leaderboard; with
-half of the movies per model it is lower on both. The verifier features are the image traces of `inference/fork_verify.py`
+Without hand labels the verifier is about 0.0017 lower on the public and slightly higher on the private leaderboard, once
+its threshold is chosen for it; with half of the movies per model it is lower on both. The threshold does not carry over:
+without hand labels the calibrated scores are higher, and at 0.25 the verifier removes about a third as many forks as the
+released one (7% vs 26% of the forks on the training movies), which costs 0.006 on the public leaderboard. 0.40 removes
+about as many as the released verifier at 0.25. The verifier features are the image traces of `inference/fork_verify.py`
 (117 separation / peak / displacement features and 40 separation-trend features); the official division score comes from
 the baseline package installed for the edge transformer (`tracking_cellmot.division_metrics`).

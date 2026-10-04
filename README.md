@@ -40,8 +40,9 @@ training movies only. Details in `external_data/README.md`.
 
 The fork verifier of the final submission is also trained on 409 hand labels: candidate divisions in 40 training movies,
 proposed by our models and checked by eye (274 divisions, 135 rejections). They and the verifier's other training events
-are in `training/fork_verifier/`; a verifier trained from the official annotations only scores about 0.0017 lower on the
-public and slightly higher on the private leaderboard. Details in `training/README.md`, section 5.
+are in `training/fork_verifier/`. A verifier trained from the official annotations only scores about 0.0017 lower on the
+public and slightly higher on the private leaderboard, with its own drop threshold (0.40 instead of 0.25). Details in
+`training/README.md`, section 5.
 
 ## Acknowledgements and licences
 
