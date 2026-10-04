@@ -108,7 +108,7 @@ hand labels; the second one uses the official annotations only.
 | file | content |
 |---|---|
 | `events.npz` | 152 forks of a tracking run on the out-of-fold node set, labelled by the competition's division score, and 2,034 candidate mother / daughter-pair events labelled by the annotations (mother frame, daughter positions, label) |
-| `hand_labels.csv` | hand labels: our models proposed candidate divisions in 40 training movies and we checked each candidate by eye: 274 divisions, 135 rejected, 396 undecided (not used). All 40 are training movies; one of them (`44b6_0b24845f`) is also among the four example movies of the test folder, which are copies of training movies. No hidden test data was labelled. |
+| `hand_labels.csv` | 409 hand labels in 39 training movies: our models proposed candidate divisions and we checked each candidate by eye; 274 are divisions (positives), 135 are not (negatives). Candidates we could not decide were left out. One of the movies (`44b6_0b24845f`) is also among the four example movies of the test folder, which are copies of training movies. No hidden test data was labelled. |
 | `motion.npz` | per-movie frame-to-frame translation used to compensate common motion in the image traces |
 
 ```bash

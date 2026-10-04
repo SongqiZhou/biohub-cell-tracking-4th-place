@@ -6,7 +6,7 @@ training/fork_verifier/ holds the events the released verifier was trained on:
                    (fork_*), and candidate mother / daughter-pair events labelled by the annotations (event_*):
                    mother frame t, the two daughter positions in frame t + 1 (um), label
   hand_labels.csv  hand-screened division candidates: candidate divisions proposed by our models on training movies,
-                   each checked by eye (verdict 1 = division, 0 = not a division, empty = not decided and unused);
+                   each checked by eye (verdict 1 = division, 0 = not a division);
                    mother voxel at frame `frame`, daughter voxels at frame + 1
   motion.npz       per-movie frame-to-frame translation (um) that compensates common motion in the traces
 Every event is traced in the raw images exactly as at inference (inference/fork_verify.py: 117 trace features + 40
