@@ -4,9 +4,11 @@
 # out-of-fold link probabilities, CNN scores and a division prior whose two models are fitted on the other half of the
 # movies. Needs run_link.sh and run_division.sh (work/link, work/div) and the baseline package (training/edge_transformer)
 # for the official division score.
+# GPUS="0 1 2" runs the independent GPU jobs in parallel (training/gpus.sh).
 set -euo pipefail
 PY=${PY:-python}
 M=${MODELS:-models}; L=work/link; D=work/div; F=work/fork; mkdir -p $F
+source training/gpus.sh
 
 # 1. Density bands as at inference (DoG spacing >= 19.7 um is sparse).
 $PY - <<'EOF'
@@ -19,8 +21,9 @@ EOF
 #    division CatBoost and pair model fitted on the other half (same recipes as the deployed models), MAX-combined.
 $PY training/candidate_graphs.py --nodes $L/nodes --edges $L/edges_oof --out $L/cand_npz
 for h in 0 1; do
-  $PY inference/division_cnn.py --cand-dir $L/cand_half$h --data-dir data/train --out-dir $L/div_cnn_paste --model "$D/cnn_oof/cnn_copypaste_half${h}_s*.pt" --tta 4 --half
+  gpu_run $PY inference/division_cnn.py --cand-dir $L/cand_half$h --data-dir data/train --out-dir $L/div_cnn_paste --model "$D/cnn_oof/cnn_copypaste_half${h}_s*.pt" --tta 4 --half
 done
+gpu_wait
 $PY training/mean_division_scores.py --inputs $L/div_cnn_plain,$L/div_cnn_paste --out $L/div_cnn
 for h in 0 1; do
   mkdir -p $F/nodes_half$h

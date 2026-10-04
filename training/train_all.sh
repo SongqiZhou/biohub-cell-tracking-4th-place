@@ -8,9 +8,10 @@
 # five fold edge transformers the out-of-fold transformer columns of the edge model, the half models (cell embedding,
 # division CNNs, edge model) the out-of-fold columns of the division models. No local evaluation is run.
 #
+# GPUS="0 1 2 3" spreads the independent jobs of each step over these GPUs (default: GPU 0 only).
 # WITH_OFFICIAL_VERIFIER=1 also trains the fork verifier from the official annotations only (run_fork.sh, optional).
 set -euo pipefail
-export PY=${PY:-python} MODELS=${MODELS:-models}
+export PY=${PY:-python} MODELS=${MODELS:-models} GPUS=${GPUS:-0}
 log() { echo "[$(date '+%F %T')] $*"; }
 
 log "1/5 3D Nets";               bash training/run_net3d.sh

@@ -16,10 +16,11 @@ $PY -m pip install --no-deps -e baseline     # dependencies: requirements.txt (t
 
 ARGS="--data-dir $DATA --splits $SPLITS --epochs 6 --lr 1e-4 --batch-size 8 --num-workers 4 --window-size 2 --pool-kernel-um 5.0 \
       --det-loss-weight 1.0 --det-neg-weight 0.01 --seed 314159 --augment brightness,flip --single-gpu"
-(cd baseline && $PY scripts/train_unet_transformer.py $ARGS --split 4 --method edge_transformer_all)
-for k in 0 1 2 3 4; do
-  (cd baseline && $PY scripts/train_unet_transformer.py $ARGS --split $((6 + k)) --method edge_transformer_fold$k)
-done
+source training/gpus.sh                       # GPUS="0 1 2": the six runs in parallel
+train() { (cd baseline && $PY scripts/train_unet_transformer.py $ARGS --split $1 --method $2); }
+gpu_run train 4 edge_transformer_all
+for k in 0 1 2 3 4; do gpu_run train $((6 + k)) edge_transformer_fold$k; done
+gpu_wait
 
 # collect: the weights of the last (6th) epoch
 mkdir -p $M/edge_transformer

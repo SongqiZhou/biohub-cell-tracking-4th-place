@@ -23,8 +23,9 @@ trained on predictions for movies the upstream model had not seen:
 | five fold edge transformers | the out-of-fold transformer columns of the edge model's training data |
 | two half models each: cell embedding, division CNNs, edge model | out-of-fold columns of the edge model and of the division models' training data |
 
-No local evaluation is run. The steps are sequential; the training runs inside a step (for example the five folds) are
-independent and can be spread over several GPUs by running the commands of the step scripts in parallel.
+No local evaluation is run. `GPUS="0 1 2 3" bash training/train_all.sh` spreads the independent jobs of each step (the
+fold models, the edge transformers, the per-fold detections, the division CNNs, ...) over these GPUs, one job per GPU at a
+time; the default is GPU 0 only.
 
 ## 1. The three 3D Nets
 
