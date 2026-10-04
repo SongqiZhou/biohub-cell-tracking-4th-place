@@ -27,9 +27,11 @@ Files:
 
 The network itself is `inference/net3d.py`; checkpoints are written in the format `inference/detect.py` loads.
 
-**Checks.** Against the implementation we used during the competition, on the same frames and the same weights:
-the labels, the input windows and the three-tier targets are identical (including frames with more than 320 labels,
-which are subsampled), and so are the loss and the gradient norm. The out-of-fold detection and pseudo-label step
+**Checks.** Against the implementation we used during the competition, on the same frames and the same weights, for
+both grids (the 128 models with the 3D Net-128 weights, the 64 model with the 3D Net-64 weights): the labels, the input
+windows and the three-tier targets are identical (including frames with more than 320 labels, which are subsampled),
+and so are the loss and the gradient norm. The training settings of all three nets are those we used; the 64 model
+differs from the 128 models only in the grid and the number of epochs. The out-of-fold detection and pseudo-label step
 reproduces our files exactly, up to one node in 60,000 that moves by one voxel through non-deterministic GPU
 reductions. Retraining will not give bit-identical weights (GPU non-determinism), only the same recipe.
 
