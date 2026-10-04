@@ -46,10 +46,13 @@ public and slightly higher on the private leaderboard, with its own drop thresho
 
 ## Acknowledgements and licences
 
+Our code is released under the MIT License (`LICENSE`). The parts derived from the official baseline keep its
+BSD 3-Clause License (see below).
+
 - The 3D Net backbone is adapted from a dual-encoder 3D U-Net with temporal attention from the literature; the unit
   vector field output and the advection decoding are in the spirit of Cellpose.
 - `inference/edge_transformer.py` re-implements, for inference, the linker architecture of the competition's official
   baseline code (tracking-cellmot, BSD 3-Clause License, Copyright (c) 2026 Thibaut Goldsborough); see
-  `inference/LICENSE-baseline.txt`.
+  `inference/LICENSE-baseline.txt`. `training/edge_transformer/baseline.patch` is a patch to that code.
 - The ILP uses [tracksdata](https://github.com/royerlab/tracksdata) with the SCIP solver.
 - External imaging data: Royer Lab, CZ Biohub (Ultrack `zebrafish_embryo`).
