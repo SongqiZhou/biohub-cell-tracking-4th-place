@@ -145,6 +145,8 @@ Late submissions, identical to the final submission except for the fork verifier
 
 Without hand labels the verifier is about 0.0017 lower on the public and slightly higher on the private leaderboard, once
 its threshold is chosen for it; with half of the movies per model it is lower on both. The threshold does not carry over:
-without hand labels the calibrated scores are higher, and 0.40 removes about as many forks as the released verifier at 0.25. The verifier features are the image traces of `inference/fork_verify.py`
+without hand labels the calibrated scores are higher, and 0.40 removes about as many forks as the released verifier at 0.25.
+
+The verifier features are the image traces of `inference/fork_verify.py`
 (117 separation / peak / displacement features and 40 separation-trend features); the official division score comes from
 the baseline package installed for the edge transformer (`tracking_cellmot.division_metrics`).
