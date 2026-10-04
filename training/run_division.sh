@@ -31,9 +31,15 @@ $PY inference/nodes_table.py --nodes $D/det --out $D/nodes
 $PY inference/candidates.py --nodes $D/nodes --out $D/cand_pool --r 10 --k 5 --k-in 3
 $PY inference/edge_features.py --nodes $D/nodes --cand $D/cand_pool --out $D/feat
 $PY training/link_labels.py --nodes $D/nodes --cand $D/cand_pool --gt data/train --out $D/labels
+# transformer probabilities: the dense movies are identical to work/link (same nodes, same candidates); score the sparse ones
+mkdir -p $D/edges_tf_fwd $D/edges_tf_rev $D/edges_tf_harm
 for k in 0 1 2 3 4; do
-  $PY inference/tf_edges.py --nodes $D/nodes --cand $D/cand_pool --test data/train --weights runs/edge_transformer_fold$k/edge_predictor_last.pth \
-      --out-root $D --movies "$($PY training/fold_movies.py $k)"
+  for m in $($PY training/fold_movies.py $k --dog work/dog_train.json --dense | tr ',' ' '); do
+    for e in fwd rev harm; do ln -sfn "$(realpath $L/edges_tf_$e/$m.npz)" $D/edges_tf_$e/$m.npz; done
+  done
+  mv=$($PY training/fold_movies.py $k --dog work/dog_train.json --sparse)
+  [ -z "$mv" ] || $PY inference/tf_edges.py --nodes $D/nodes --cand $D/cand_pool --test data/train \
+      --weights runs/edge_transformer_fold$k/edge_predictor_last.pth --out-root $D --movies "$mv"
 done
 $PY training/fit_edge_model.py --feat $D/feat --labels $D/labels --root $D --extra tf_fwd,tf_rev,tf_harm --oof $D/edges_oof_noemb --n-jobs 48
 

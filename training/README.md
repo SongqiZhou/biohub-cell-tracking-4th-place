@@ -4,6 +4,28 @@ All models are trained on the 199 competition training movies (`data/train`); th
 uses 102 external windows (see `external_data/README.md`). Out-of-fold predictions use the five embryo-stratified
 folds in `folds.json`.
 
+## End to end
+
+`train_all.sh` trains every model of the final pipeline in order (sections 1–5) and writes `models/` in the layout
+`inference/` loads:
+
+```bash
+bash training/train_all.sh                               # MODELS=models by default
+WITH_OFFICIAL_VERIFIER=1 bash training/train_all.sh      # also the annotations-only fork verifier (section 5b)
+```
+
+Fold and half models are trained only where the pipeline needs out-of-fold inputs, because the downstream models were
+trained on predictions for movies the upstream model had not seen:
+
+| extra models | used for |
+|---|---|
+| five fold 3D Net-128 models | out-of-fold detections: the pseudo-labels of 3D Net-128-PL and the node set all downstream models are trained on |
+| five fold edge transformers | the out-of-fold transformer columns of the edge model's training data |
+| two half models each: cell embedding, division CNNs, edge model | out-of-fold columns of the edge model and of the division models' training data |
+
+No local evaluation is run. The steps are sequential; the training runs inside a step (for example the five folds) are
+independent and can be spread over several GPUs by running the commands of the step scripts in parallel.
+
 ## 1. The three 3D Nets
 
 `run_net3d.sh` runs the whole sequence:

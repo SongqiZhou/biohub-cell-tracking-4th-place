@@ -7,9 +7,11 @@ PY=${PY:-python}
 DATA=$(realpath ${DATA:-data/train}); SPLITS=$(realpath training/edge_transformer/splits.json); PATCH=$(realpath training/edge_transformer/baseline.patch)
 M=${MODELS:-models}
 
-git clone https://github.com/royerlab/kaggle-cell-tracking-competition.git baseline
-git -C baseline checkout 075fc5f
-git -C baseline apply "$PATCH"
+if [ ! -d baseline ]; then
+  git clone https://github.com/royerlab/kaggle-cell-tracking-competition.git baseline
+  git -C baseline checkout 075fc5f
+  git -C baseline apply "$PATCH"
+fi
 $PY -m pip install --no-deps -e baseline     # dependencies: requirements.txt (tracksdata pinned there)
 
 ARGS="--data-dir $DATA --splits $SPLITS --epochs 6 --lr 1e-4 --batch-size 8 --num-workers 4 --window-size 2 --pool-kernel-um 5.0 \

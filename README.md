@@ -13,7 +13,7 @@ ILP, and a fork verifier, gap bridging and a track-support gate for sparse movie
 |---|---|
 | `inference/` | the complete inference pipeline (detection → linking → divisions → ILP → post-processing); see `inference/README.md` |
 | `external_data/` | the external data we used, how much, and how it was downloaded, pseudo-labelled and merged; see `external_data/README.md` |
-| `training/` | training code for every model: 3D Nets, edge transformer, cell embedding, edge model, division models, fork verifier; see `training/README.md` |
+| `training/` | training code for every model (3D Nets, edge transformer, cell embedding, edge model, division models, fork verifier); `training/train_all.sh` runs it end to end; see `training/README.md` |
 
 ## Quick start (inference)
 
