@@ -24,6 +24,8 @@ from scipy.ndimage import maximum_filter
 from scipy.spatial import cKDTree
 from torch.utils.data import Dataset
 
+from common import ZarrFrames
+
 SCALE_ZYX = np.array([1.625, 0.40625, 0.40625], np.float32)     # full-resolution um / voxel
 MAX_LABELS = 320                                                   # labels per frame; more are subsampled at random
 
@@ -55,7 +57,7 @@ class Frames:
 
     def array(self, name: str):
         if name not in self._arr:
-            self._arr[name] = zarr.open_group(str(self.dir / f'{name}.zarr'), mode='r')['0']
+            self._arr[name] = ZarrFrames(self.dir / f'{name}.zarr')
         return self._arr[name]
 
     def frame(self, name: str, t: int) -> np.ndarray:

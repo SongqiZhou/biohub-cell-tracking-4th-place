@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
-from common import CSV_HEADER, submission_rows
+from common import CSV_HEADER, ZarrFrames, submission_rows
 
 SCALE = np.array([1.625, .40625, .40625], np.float32)
 
@@ -64,8 +64,7 @@ def assemble(positions, quality, valid, shift, times):
 
 class Frames:
     def __init__(self, zarr_path):
-        import zarr
-        self.arr = zarr.open(str(zarr_path), mode='r')['0']; self.T = int(self.arr.shape[0]); self.cache = {}
+        self.arr = ZarrFrames(zarr_path); self.T = int(self.arr.shape[0]); self.cache = {}
 
     def get(self, t):
         t = int(t)

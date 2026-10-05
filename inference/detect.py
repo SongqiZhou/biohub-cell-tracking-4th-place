@@ -26,6 +26,7 @@ from scipy.optimize import linear_sum_assignment
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from common import ZarrFrames  # noqa: E402
 from net3d import load_net3d  # noqa: E402
 
 warnings.filterwarnings("ignore", message="index_reduce")
@@ -55,9 +56,7 @@ class Movie:
     """One movie in RAM (uint16); normalised XY-pooled frames are cached as float16."""
 
     def __init__(self, zarr_path: Path, pool: int):
-        import zarr
-        g = zarr.open_group(str(zarr_path), mode="r")
-        self.raw = np.asarray(g["0"])                        # (T, Z, Y, X)
+        self.raw = ZarrFrames(zarr_path).read_all()          # (T, Z, Y, X)
         self.T = int(self.raw.shape[0])
         self.pool = pool
         self._cache: dict[int, np.ndarray] = {}

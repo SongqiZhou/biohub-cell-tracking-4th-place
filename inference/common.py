@@ -1,11 +1,50 @@
 """Shared constants and small graph utilities used by the downstream steps."""
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 SCALE_ZYX = np.array([1.625, 0.40625, 0.40625], np.float32)   # full-resolution um / voxel
 CSV_HEADER = 'dataset,row_type,node_id,t,z,y,x,source_id,target_id'
+
+
+class ZarrFrames:
+    """Frames of a movie's image array (<movie>.zarr/0, shape (T, Z, Y, X)). The movies store one blosc chunk per time point;
+    such a chunk is read and decoded directly, which gives the same array as zarr without zarr's per-read overhead (seconds
+    per frame on a busy machine). Any other layout is read through zarr."""
+
+    def __init__(self, zarr_path):
+        self.path = Path(zarr_path)
+        meta = json.loads((self.path / '0' / 'zarr.json').read_text())
+        self.shape = tuple(int(v) for v in meta['shape']); self.dtype = np.dtype(meta['data_type'])
+        chunk = meta.get('chunk_grid', {}).get('configuration', {}).get('chunk_shape')
+        keys = meta.get('chunk_key_encoding', {})
+        self.direct = (list(chunk or []) == [1, *self.shape[1:]] and [c.get('name') for c in meta.get('codecs', [])] == ['bytes', 'blosc']
+                       and keys.get('name', 'default') == 'default' and keys.get('configuration', {}).get('separator', '/') == '/')
+        self.fill = meta.get('fill_value') or 0
+        self._z = None
+
+    def __len__(self):
+        return self.shape[0]
+
+    def __getitem__(self, t) -> np.ndarray:
+        t = int(t)
+        if self.direct:
+            import blosc2
+            f = self.path / '0' / 'c' / str(t) / '0' / '0' / '0'
+            if not f.exists():
+                return np.full(self.shape[1:], self.fill, self.dtype)
+            return np.frombuffer(blosc2.decompress(f.read_bytes()), dtype=self.dtype).reshape(self.shape[1:]).copy()
+        if self._z is None:
+            import zarr
+            self._z = zarr.open_group(str(self.path), mode='r')['0']
+        return np.asarray(self._z[t])
+
+    def read_all(self) -> np.ndarray:
+        return np.stack([self[t] for t in range(self.shape[0])])
 
 
 def submission_rows(name, nodes, edges) -> list[str]:

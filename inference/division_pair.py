@@ -22,10 +22,9 @@ import os
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
-import zarr
 from scipy.spatial import cKDTree
 
-from common import topk_edges
+from common import ZarrFrames, topk_edges
 from division_features import NAMES as GRAPH_NAMES, build_arrays
 
 A = None                                                             # command-line arguments (main)
@@ -60,7 +59,7 @@ def local_batch(vol, p50, den, um):
 
 def tables(zarr_path, t, um):
     """descriptors of every node in its own frame (tab) and at its position in the next frame (tabn, NaN in the last frame)"""
-    arr = zarr.open(zarr_path, mode='r')['0']; N = len(t); T = int(arr.shape[0]); tab = np.zeros((N, 8), np.float32); tabn = np.full((N, 8), np.nan, np.float32)
+    arr = ZarrFrames(zarr_path); N = len(t); T = int(arr.shape[0]); tab = np.zeros((N, 8), np.float32); tabn = np.full((N, 8), np.nan, np.float32)
     for tt in range(T):
         vol = np.asarray(arr[tt]).astype(np.float32); p50, p995 = np.percentile(vol[::2, ::2, ::2], [50, 99.5]); den = max(1.0, p995 - p50)
         ks = np.where(t == tt)[0]

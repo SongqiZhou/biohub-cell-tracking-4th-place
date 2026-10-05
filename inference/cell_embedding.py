@@ -12,7 +12,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import zarr
+
+from common import ZarrFrames
 
 PZ, PYX = 16, 32
 
@@ -57,7 +58,7 @@ def main():
     for f in sorted(glob.glob(os.path.join(A.nodes, '*.npz'))):
         m = os.path.basename(f)[:-4]; z = np.load(f); t = z['t'].astype(int); vox = np.rint(z['vox']).astype(np.int64); N = len(t)
         c = np.load(os.path.join(A.cand, m + '.npz')); I, J = c['I'].astype(np.int64), c['J'].astype(np.int64)
-        arr = zarr.open(os.path.join(A.test, m + '.zarr'), mode='r')['0']
+        arr = ZarrFrames(os.path.join(A.test, m + '.zarr'))
         E = torch.zeros(N, int(ck['emb']), device=dev)
         with torch.no_grad(), torch.autocast(device_type='cuda', dtype=torch.float16, enabled=(dev.type == 'cuda')):
             for tt in np.unique(t):

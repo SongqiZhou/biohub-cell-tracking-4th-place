@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from common import ZarrFrames
 from edge_transformer import load_edge_transformer, position_embedding
 
 
@@ -21,7 +22,7 @@ class Movie:
     def __init__(self, zarr_path, ds):
         import zarr
         g = zarr.open_group(str(zarr_path), mode='r')
-        self.raw = np.asarray(g['0'])
+        self.raw = ZarrFrames(zarr_path).read_all()
         q = g.attrs['image_statistics']['quantiles']
         self.q_low, self.q_high = float(q['0.001']), float(q['0.999'])
         self.T = int(self.raw.shape[0])

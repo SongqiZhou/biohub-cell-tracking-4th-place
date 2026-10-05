@@ -30,10 +30,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import zarr
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'inference'))
 from cell_embedding import Encoder, norm_patch  # noqa: E402
+from common import ZarrFrames  # noqa: E402
 
 PZ, PYX = 16, 32
 
@@ -63,7 +63,7 @@ def build_pairs(args):
         return m, 0, 0
     I, J, y = I[sel], J[sel], y[sel]
     nodes = np.unique(np.concatenate([I, J])); pos = {int(n): k for k, n in enumerate(nodes)}
-    arr = zarr.open(str(Path(a.data) / f'{m}.zarr'), mode='r')['0']
+    arr = ZarrFrames(Path(a.data) / f'{m}.zarr')
     patches = np.zeros((len(nodes), PZ, PYX, PYX), np.uint16)
     for tt in np.unique(t[nodes]):
         ks = np.where(t[nodes] == tt)[0]
@@ -114,7 +114,7 @@ def score_movie(enc, m, a, dev, emb=64):
     """embeddings of all nodes (fp32) -> p for every candidate link, and the node embeddings"""
     z = np.load(Path(a.nodes) / f'{m}.npz'); t = z['t'].astype(int); vox = np.rint(z['vox']).astype(int)
     c = np.load(Path(a.cand) / f'{m}.npz'); I, J = c['I'].astype(int), c['J'].astype(int)
-    arr = zarr.open(str(Path(a.data) / f'{m}.zarr'), mode='r')['0']; E = torch.zeros(len(t), emb, device=dev)
+    arr = ZarrFrames(Path(a.data) / f'{m}.zarr'); E = torch.zeros(len(t), emb, device=dev)
     for tt in np.unique(t):
         ks = np.where(t == tt)[0]; vol = np.asarray(arr[int(tt)])
         for s in range(0, len(ks), 2048):
