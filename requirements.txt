@@ -1,13 +1,18 @@
-# tested with Python 3.12
-torch==2.13.0
+# tested with Python 3.12; PyTorch from its CUDA 12.6 wheels (works with NVIDIA drivers for CUDA >= 12.6)
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch==2.13.0+cu126
 numpy==2.4.4
 scipy==1.18.0
 pandas==3.0.5
+scikit-learn==1.9.0
 zarr==3.2.1
 blosc2==4.7.0
+fsspec==2026.4.0
+aiohttp==3.14.3        # remote zarr reads (download of the external data)
 lightgbm==4.7.0
 catboost==1.2.10
 polars==1.42.0
 pyscipopt==6.2.1
 ilpy==0.6.0
 tracksdata==0.1.0rc9   # the ILP solver interface; the Kaggle notebook installs it from the public support-pack wheels
+tqdm==4.70.0
