@@ -34,7 +34,10 @@ One external embryo, the public Ultrack `zebrafish_embryo` light-sheet volume (n
 64 × 256 × 256 voxels × 100 frames (**10,200 frames**, 39 GB), pseudo-labelled by our ground-truth-only 3D Net
 (**2.02 M** pseudo-label nodes). It is used by one model only, the pseudo-label 3D Net that refines the nodes, where
 it makes up 34% of the training windows and 30% of the pseudo-label nodes. All other models use the 199 competition
-training movies only. Details in `external_data/README.md`.
+training movies only. Details in `external_data/README.md`. The pseudo-labels of that model (competition movies and
+external windows, 6.8 M nodes) are released as the Kaggle dataset `songqizhou/biohub-4th-place-pseudo-labels`, and
+training uses them by default: regenerated ones come from retrained detectors that are never bit-identical, and the
+pseudo-label 3D Net is sensitive to that (`training/README.md`, section 1).
 
 ## Hand labels
 

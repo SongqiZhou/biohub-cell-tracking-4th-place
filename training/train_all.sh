@@ -1,12 +1,13 @@
 #!/bin/bash
 # Train every model of the final pipeline, in order, from the competition training data. Run from the repository root with
-# data/train = the competition training movies. The result is models/ in the layout inference/ loads
-# (cp -r models inference/models, or MODELS=inference/models).
+# data/train = the competition training movies and data/pseudo_labels = our pseudo-labels (kaggle datasets download
+# songqizhou/biohub-4th-place-pseudo-labels -p data/pseudo_labels --unzip; PSEUDO=regenerate rebuilds them instead).
+# The result is models/ in the layout inference/ loads (cp -r models inference/models, or MODELS=inference/models).
 #
 # Fold / half models are trained only where the pipeline needs out-of-fold inputs: the five fold 3D Net-128 models give
-# the out-of-fold detections (pseudo-labels for 3D Net-128-PL, and the node set every downstream model is trained on), the
-# five fold edge transformers the out-of-fold transformer columns of the edge model, the half models (cell embedding,
-# division CNNs, edge model) the out-of-fold columns of the division models. No local evaluation is run.
+# the out-of-fold detections (the node set every downstream model is trained on), the five fold edge transformers the
+# out-of-fold transformer columns of the edge model, the half models (cell embedding, division CNNs, edge model) the
+# out-of-fold columns of the division models. No local evaluation is run.
 #
 # GPUS="0 1 2 3" spreads the independent jobs of each step over these GPUs (default: GPU 0 only).
 # WITH_OFFICIAL_VERIFIER=1 also trains the fork verifier from the official annotations only (run_fork.sh, optional).

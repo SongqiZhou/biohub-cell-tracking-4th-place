@@ -22,7 +22,7 @@ embedding, edge model, division models, fork verifier) — is trained on the 199
 | time spans | 3 start frames (t0 = 50, 200, 350), 34 windows each |
 | position | a 104 µm grid in Y/X (origins 104–728 µm); z = 104–208 µm for 100 windows and 0–104 µm for 2 |
 | storage | 39 GB in the competition zarr format (about 115 GB downloaded, see below) |
-| pseudo-label nodes | **2,023,831** (≈ 198 per frame), from 3D Net-128 |
+| pseudo-label nodes | **2,023,831** (≈ 198 per frame), from 3D Net-128; released in the Kaggle dataset `songqizhou/biohub-4th-place-pseudo-labels` |
 
 Share in the training set of 3D Net-128-PL:
 
@@ -38,7 +38,15 @@ model sees ground truth wherever it exists.
 
 ## Pipeline
 
+Training uses our pseudo-labels by default: the Kaggle dataset `songqizhou/biohub-4th-place-pseudo-labels` holds them for
+the competition movies (`pseudo_oof/`) and for the external windows (`pseudo_ultrack/`); `training/run_net3d.sh` checks
+them against `training/pseudo_labels.sha256` and runs step 4 below with them. With `PSEUDO=regenerate` it runs all four
+steps with the newly trained 3D Nets instead (see `training/README.md`, section 1, for why this is not the default).
+
 ```bash
+# 0. our pseudo-labels (61 MB)
+kaggle datasets download songqizhou/biohub-4th-place-pseudo-labels -p data/pseudo_labels --unzip
+
 # 1. download the 102 windows in the competition format (~39 GB on disk)
 python external_data/extract_ultrack_windows.py --out-dir data/ultrack_windows --workers 6
 
@@ -58,7 +66,7 @@ The competition pseudo-labels (`work/pseudo_oof`) are the out-of-fold detections
 3D Net-128 on the 199 training movies, passed through the same `make_pseudo_labels.py`. The external windows are
 labelled once, by the final 3D Net-128; there is no iterative self-training.
 
-Steps 2 and 3 reproduce our pseudo-labels exactly (checked file by file).
+Steps 2 and 3 reproduce our pseudo-labels exactly (checked file by file) when run with our 3D Net-128 weights.
 
 ## Notes
 

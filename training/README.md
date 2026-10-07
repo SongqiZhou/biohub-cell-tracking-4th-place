@@ -1,8 +1,8 @@
 # Training
 
 All models are trained on the 199 competition training movies (`data/train`); the pseudo-label 3D Net additionally
-uses 102 external windows (see `external_data/README.md`). Out-of-fold predictions use the five embryo-stratified
-folds in `folds.json`.
+uses 102 external windows (see `external_data/README.md`) and our pseudo-labels (`data/pseudo_labels`, section 1).
+Out-of-fold predictions use the five embryo-stratified folds in `folds.json`.
 
 ## End to end
 
@@ -10,6 +10,7 @@ folds in `folds.json`.
 `inference/` loads:
 
 ```bash
+kaggle datasets download songqizhou/biohub-4th-place-pseudo-labels -p data/pseudo_labels --unzip   # 61 MB
 bash training/train_all.sh                               # MODELS=models by default
 WITH_OFFICIAL_VERIFIER=1 bash training/train_all.sh      # also the annotations-only fork verifier (section 5b)
 ```
@@ -19,7 +20,7 @@ trained on predictions for movies the upstream model had not seen:
 
 | extra models | used for |
 |---|---|
-| five fold 3D Net-128 models | out-of-fold detections: the pseudo-labels of 3D Net-128-PL and the node set all downstream models are trained on |
+| five fold 3D Net-128 models | out-of-fold detections: the node set all downstream models are trained on (and the pseudo-labels of 3D Net-128-PL with `PSEUDO=regenerate`) |
 | five fold edge transformers | the out-of-fold transformer columns of the edge model's training data |
 | two half models each: cell embedding, division CNNs, edge model | out-of-fold columns of the edge model and of the division models' training data |
 
@@ -34,10 +35,22 @@ time; the default is GPU 0 only.
 | step | what | output |
 |---|---|---|
 | 1 | 3D Net-128 on ground truth: five fold models + the final model, 10 epochs, average of epochs 7–10 | `net3d_128_fold{0..4}.pt`, `net3d_128.pt` |
-| 2 | out-of-fold detections of the 199 movies with the fold models → pseudo-labels | `work/pseudo_oof` |
-| 3 | external windows labelled by `net3d_128.pt` → combined training set | `data/mix` |
+| 2 | 3D Net-64 on ground truth (XY pooled by 4), 50 epochs, last epoch, fp16-safe scaling | `net3d_64.pt` |
+| 3 | combined training set: the 199 movies and the 102 external windows with our pseudo-labels (`data/pseudo_labels`, checked against `pseudo_labels.sha256`) | `data/mix` |
 | 4 | 3D Net-128-PL on `data/mix` (annotated nodes + pseudo-labels), 10 epochs, average of epochs 7–10 | `net3d_128_pl.pt` |
-| 5 | 3D Net-64 on ground truth (XY pooled by 4), 50 epochs, last epoch, fp16-safe scaling | `net3d_64.pt` |
+
+**Pseudo-labels.** Ours are released as the Kaggle dataset `songqizhou/biohub-4th-place-pseudo-labels` (199 + 102 files,
+6.8 M nodes): the out-of-fold detections of the five fold models on the competition movies and the detections of the
+final 3D Net-128 on the external windows, after `external_data/make_pseudo_labels.py`. `PSEUDO=regenerate bash
+training/run_net3d.sh` rebuilds them from the newly trained 3D Nets instead (out-of-fold detections → `work/pseudo_oof`,
+external windows → `work/pseudo_ultrack`, training set `data/mix_regenerated`). Given the same detector weights this
+reproduces our files exactly, but retrained detectors are never bit-identical, and 3D Net-128-PL is sensitive to the
+difference. In a from-scratch run with regenerated pseudo-labels (all other models retrained as well) the private score
+was unchanged (0.96251 vs 0.96234) while the public score dropped from 0.96987 to 0.96093. Swapping one model group at a
+time into the released weights put the drop in the 3D Nets; end-to-end runs on 28 windows of four unseen Zebrahub
+embryos, scored against their Ultrack tracks, put it in 3D Net-128-PL: trained on regenerated pseudo-labels it scores
+0.002 lower than the released model, trained with the same code on the released pseudo-labels it matches it (0.6015 vs
+0.6013). This is why the released pseudo-labels are the default.
 
 Files:
 
@@ -47,6 +60,7 @@ Files:
 | `net3d_data.py` | frame reading and normalisation, label merging, the three-tier sparse-label targets, random Y/X flips |
 | `average_checkpoints.py` | epoch averaging into the deployed weights (and the fp16-safe scaling of the 64 model) |
 | `folds.json`, `fold_movies.py` | the five folds |
+| `pseudo_labels.sha256` | checksums of the released pseudo-labels |
 
 The network itself is `inference/net3d.py`; checkpoints are written in the format `inference/detect.py` loads.
 
@@ -56,7 +70,9 @@ windows and the three-tier targets are identical (including frames with more tha
 and so are the loss and the gradient norm. The training settings of all three nets are those we used; the 64 model
 differs from the 128 models only in the grid and the number of epochs. The out-of-fold detection and pseudo-label step
 reproduces our files exactly, up to one node in 60,000 that moves by one voxel through non-deterministic GPU
-reductions. Retraining will not give bit-identical weights (GPU non-determinism), only the same recipe.
+reductions. Retraining will not give bit-identical weights (GPU non-determinism), only the same recipe. On the released
+pseudo-labels, 3D Net-128-PL trained with this code follows the loss curve of ours (0.6843 / 0.5661 / … / 0.5039 per
+epoch against 0.6864 / 0.5688 / … / 0.5052).
 
 ## 2. Linking: cell embedding and edge model
 
