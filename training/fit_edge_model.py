@@ -7,8 +7,8 @@
 <root>/edges_<extra>/<movie>.npz hold the out-of-fold evidence (I, J, p) in candidate order: tf_* from the five fold edge
 transformers, embed from the two fold cell-embedding encoders. Only links with a label (y >= 0) are used.
 
-With --oof DIR nothing is saved as a model: two models are fitted on the two halves of the sorted movies, and each scores
-the other half -> DIR/<movie>.npz (I, J, p). These out-of-fold link probabilities are the training input of the division
+With --oof DIR nothing is saved as a model: two models are fitted on the two halves of the movies (every second one by sorted
+name), and each scores the other half -> DIR/<movie>.npz (I, J, p). These out-of-fold link probabilities are the training input of the division
 models (run_division.sh).
 """
 import argparse

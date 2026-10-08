@@ -25,8 +25,9 @@ python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work
 
 On Kaggle (2 × T4) the whole pipeline takes about 31 minutes on the 4 visible test movies.
 
-`tracksdata` is used through its ILP interface; we used a development build (0.1.0rc9). The Kaggle notebook installs
-it, together with `zarr`, SCIP and a recent `polars`, from the public `biohub-tracking-support-pack` wheels.
+`tracksdata` is used through its ILP interface. The Kaggle notebook installs it, together with `zarr`, SCIP and a recent
+`polars`, from the public `biohub-tracking-support-pack` wheels (a development build, 0.1.0rc6.dev3); locally we used
+0.1.0rc9 (`requirements.txt`), which gives byte-identical output.
 
 ## External data in one paragraph
 

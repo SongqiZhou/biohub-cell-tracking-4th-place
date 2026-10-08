@@ -2,12 +2,13 @@
 
 All models are trained on the 199 competition training movies (`data/train`); the pseudo-label 3D Net additionally
 uses 102 external windows (see `external_data/README.md`) and our pseudo-labels (`data/pseudo_labels`, section 1).
-Out-of-fold predictions use the five embryo-stratified folds in `folds.json`.
+Out-of-fold predictions of the 3D Nets and the edge transformers use the five embryo-stratified folds in `folds.json`;
+the second-level models use two halves of the movies (every second movie by sorted name, `fold_movies.py --half`).
 
 ## End to end
 
 `train_all.sh` trains every model of the final pipeline in order (sections 1–5) and writes `models/` in the layout
-`inference/` loads:
+`inference/` loads (`cp -r models/. inference/models/`, or `MODELS=inference/models`):
 
 ```bash
 kaggle datasets download songqizhou/biohub-4th-place-pseudo-labels -p data/pseudo_labels --unzip   # 61 MB
@@ -38,6 +39,9 @@ time; the default is GPU 0 only.
 | 2 | 3D Net-64 on ground truth (XY pooled by 4), 50 epochs, last epoch, fp16-safe scaling | `net3d_64.pt` |
 | 3 | combined training set: the 199 movies and the 102 external windows with our pseudo-labels (`data/pseudo_labels`, checked against `pseudo_labels.sha256`) | `data/mix` |
 | 4 | 3D Net-128-PL on `data/mix` (annotated nodes + pseudo-labels), 10 epochs, average of epochs 7–10 | `net3d_128_pl.pt` |
+
+Meanwhile the 102 external windows are downloaded and extracted in the background
+(`external_data/extract_ultrack_windows.py`: about 115 GB of reads, 39 GB on disk in `data/ultrack_windows`).
 
 **Pseudo-labels.** Ours are released as the Kaggle dataset `songqizhou/biohub-4th-place-pseudo-labels` (199 + 102 files,
 6.8 M nodes): the out-of-fold detections of the five fold models on the competition movies and the detections of the
@@ -76,24 +80,7 @@ pseudo-labels, 3D Net-128-PL trained with this code follows the loss curve of ou
 epoch against 0.6864 / 0.5688 / … / 0.5052), and so does a rerun of the training code we used during the competition, with
 the same settings and seed (0.6850 / 0.5683 / … / 0.5047).
 
-## 2. Linking: cell embedding and edge model
-
-`run_link.sh` builds the training data of the linking stage and fits its models:
-
-| step | what | output |
-|---|---|---|
-| 1 | out-of-fold node set of the 199 movies: fold 3D Net-128 refined by 3D Net-128-PL; DoG spacing >= 19.0 um -> seed threshold 0.99 | `work/link/det` |
-| 2 | candidate links, 26 edge features, ground-truth link labels (`link_labels.py`) | `work/link/{nodes,cand_pool,feat,labels}` |
-| 3 | out-of-fold transformer link probabilities from the five fold edge transformers | `work/link/edges_tf_*` |
-| 4 | cell embedding: labelled pairs, two out-of-fold encoders (movies split by sorted name into halves), and the deployed encoder on all movies (`train_cell_embedding.py`) | `work/link/edges_embed`, `cell_embedding.pt` |
-| 5 | edge model: LightGBM, 600 trees, learning rate 0.05, 63 leaves (`fit_edge_model.py`) | `edge_lgbm/` |
-
-**Checks.** Each step reproduces the files we trained with: the out-of-fold nodes and scores, the candidate links,
-features and labels, the out-of-fold transformer and embedding columns, the pair patches and the node embeddings are
-identical. Refitting the edge model on our original training table gives the same 639,118 labelled links and
-predictions that agree with the deployed model to 3e-14.
-
-## 3. Edge transformer
+## 2. Edge transformer
 
 The linker of the competition baseline (royerlab/kaggle-cell-tracking-competition, commit `075fc5f`, BSD-3), retrained
 with our folds. `edge_transformer/run.sh` clones the baseline, applies `edge_transformer/baseline.patch` and trains six
@@ -102,14 +89,31 @@ models (6 epochs each, lr 1e-4, batch 8, window 2, 5 um pooling, brightness + fl
 | split in `edge_transformer/splits.json` | training movies | output |
 |---|---|---|
 | 4 | all 199 | `models/edge_transformer/` (deployed) |
-| 6 + k, k = 0..4 | all but fold k | `runs/edge_transformer_fold<k>/` (out-of-fold link probabilities, `run_link.sh` step 3) |
+| 6 + k, k = 0..4 | all but fold k | `runs/edge_transformer_fold<k>/` (out-of-fold link probabilities, `run_link.sh` step 3, section 3) |
 
 The weights of the last epoch are used. The patch changes nothing in the model or the loss; it only
 * seeds the global torch / numpy generators as well (model initialisation and dropout), not only the data order,
 * saves the weights of every epoch as `edge_predictor_last.pth` next to the baseline's "best" checkpoint,
 * adds `--seed` and `--augment` to the command line.
 
-Run this before `run_link.sh`.
+Run this before `run_link.sh` (section 3).
+
+## 3. Linking: cell embedding and edge model
+
+`run_link.sh` builds the training data of the linking stage and fits its models:
+
+| step | what | output |
+|---|---|---|
+| 1 | out-of-fold node set of the 199 movies: fold 3D Net-128 refined by 3D Net-128-PL (which saw all movies, as at inference); DoG spacing >= 19.0 um -> seed threshold 0.99 | `work/link/det` |
+| 2 | candidate links, 26 edge features, ground-truth link labels (`link_labels.py`) | `work/link/{nodes,cand_pool,feat,labels}` |
+| 3 | out-of-fold transformer link probabilities from the five fold edge transformers | `work/link/edges_tf_*` |
+| 4 | cell embedding: labelled pairs, two out-of-fold encoders (the two halves of the movies), and the deployed encoder on all movies (`train_cell_embedding.py`) | `work/link/edges_embed`, `cell_embedding.pt` |
+| 5 | edge model: LightGBM, 600 trees, learning rate 0.05, 63 leaves (`fit_edge_model.py`) | `edge_lgbm/` |
+
+**Checks.** Each step reproduces the files we trained with: the out-of-fold nodes and scores, the candidate links,
+features and labels, the out-of-fold transformer and embedding columns, the pair patches and the node embeddings are
+identical. Refitting the edge model on our original training table gives the same 639,118 labelled links and
+predictions that agree with the deployed model to 3e-14.
 
 ## 4. Division models
 
@@ -157,7 +161,8 @@ python training/fork_verifier_rows.py --data data/train --out work/fork_released
 python training/train_fork_verifier.py --rows work/fork_released/rows --out models/fork_verifier
 ```
 
-Each of the two verifiers is trained on one half of the movies (minus a fifth for calibration). This reproduces the
+Each of the two verifiers is trained on one half of the movies, without every fifth movie of that half, and calibrated
+on the out-of-fold scores of three inner models (each fitted on two thirds of the same movies). This reproduces the
 released weights exactly (identical predictions and calibration); they are used with the drop threshold 0.25.
 `fork_verifier_rows.py --no-hand-labels` gives the same recipe without the hand labels.
 
@@ -174,7 +179,9 @@ on the training movies with out-of-fold inputs only:
 | 4 | rows (`fork_rows.py`): every fork of the solved graphs, labelled by the competition's division score; and candidate events (the three pairs of the three most probable children of every node with prior >= 0.02), labelled by the annotations | `work/fork/rows` |
 | 5 | two verifiers on all movies (`train_fork_verifier.py --all-movies`) | `fork_verifier_official/{a,b}` |
 
-Use these weights with the drop threshold 0.40 (`downstream.py --fork-thr 0.40`).
+Use these weights with the drop threshold 0.40: copy `fork_verifier_official/{a,b}` over
+`inference/models/fork_verifier/` and set `FORK_THR = 0.40` in `inference/kaggle_notebook.py` (or run `downstream.py`
+with `--fork-thr 0.40`).
 
 ### Comparison
 

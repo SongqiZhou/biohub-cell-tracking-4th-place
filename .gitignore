@@ -4,3 +4,9 @@ inference/models/
 inference/wheels/
 work/
 *.zarr/
+# written by the training scripts at the repository root
+/data/
+/runs/
+/models/
+/baseline/
+catboost_info/

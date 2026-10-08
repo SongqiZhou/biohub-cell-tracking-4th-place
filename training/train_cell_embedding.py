@@ -8,7 +8,7 @@ positives, with up to 3 hard negatives per positive as extra columns.
     # 1. patches of all nodes that take part in a labelled pair
     python training/train_cell_embedding.py pairs --nodes work/link/nodes --cand work/link/cand_pool --labels work/link/labels \
         --data data/train --out work/link/pairs
-    # 2. two out-of-fold encoders (movies split by sorted name into halves); each scores its held-out half:
+    # 2. two out-of-fold encoders (every second movie by sorted name); each scores its held-out half:
     #    <out>/<movie>.npz (I, J, p = (cos + 1) / 2) and <emb-out>/<movie>.npy (node embeddings, float16)
     python training/train_cell_embedding.py train --pairs work/link/pairs --fold 0 --nodes work/link/nodes --cand work/link/cand_pool \
         --data data/train --out work/link/edges_embed --emb-out work/link/embeddings
@@ -53,7 +53,7 @@ def crop_batch(vol, vox):
 def build_pairs(args):
     m, a = args
     out = Path(a.out) / f'{m}.npz'
-    z = np.load(Path(a.nodes) / f'{m}.npz'); t = z['t'].astype(int); vox = np.rint(z['vox']).astype(int); um = z['um'].astype(np.float32)
+    z = np.load(Path(a.nodes) / f'{m}.npz'); t = z['t'].astype(int); vox = np.rint(z['vox']).astype(int)
     c = np.load(Path(a.cand) / f'{m}.npz'); y = np.load(Path(a.labels) / f'{m}.npz')['y'].astype(int)
     I, J = c['I'].astype(int), c['J'].astype(int)
     sel = np.where(y >= 0)[0]

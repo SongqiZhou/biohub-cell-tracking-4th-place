@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Tracking ILP (tracksdata + SCIP) on the fixed node set.
 
-  maximise  sum_links -p_ij * y_ij  - app * appear_i - dis * disappear_i - div_i * divide_i   (tracksdata sign convention)
+  minimise  sum_links -p_ij * y_ij  + app * appear_i + dis * disappear_i + div_i * divide_i   (tracksdata sign convention)
 
 Link weights are the learned link probabilities; only links with p above a threshold enter the graph. The division cost is
 per node, div_i = base - gain * s_i, where s_i is the division prior, and the link threshold of a likely mother is relaxed

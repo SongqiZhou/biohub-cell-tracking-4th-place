@@ -19,7 +19,6 @@ EOF
 
 # 2. Out-of-fold division prior of the node set of work/link: CNN ensemble (plain + copy-paste networks of the other half),
 #    division CatBoost and pair model fitted on the other half (same recipes as the deployed models), MAX-combined.
-$PY training/candidate_graphs.py --nodes $L/nodes --edges $L/edges_oof --out $L/cand_npz
 for h in 0 1; do
   gpu_run $PY inference/division_cnn.py --cand-dir $L/cand_half$h --data-dir data/train --out-dir $L/div_cnn_paste --model "$D/cnn_oof/cnn_copypaste_half${h}_s*.pt" --tta 4 --half
 done
@@ -40,7 +39,7 @@ done
 $PY inference/ilp_solve.py --nodes $L/nodes --edges $L/edges_oof --div-dir $F/div_prior --alt-dir $L/edges_tf_harm --alt-min-divs 0.2 \
     --div-costs 6,16,0.5 --sparse-div-costs 5,16,0.5 --route $F/route.json --out $F/pred.csv --graph-out $F/graph --jobs 16
 
-# 4. Rows and the two verifiers, both trained on all movies (use them with drop threshold 0.40: downstream.py --fork-thr 0.40).
+# 4. Rows and the two verifiers, both trained on all movies (use them with drop threshold 0.40, see training/README.md, 5b).
 $PY training/fork_rows.py --graph $F/graph --nodes $L/nodes --labels $L/labels --edges $L/edges_oof --prior $F/div_prior --gt data/train \
     --data data/train --out $F/rows
 $PY training/train_fork_verifier.py --rows $F/rows --out $M/fork_verifier_official --all-movies

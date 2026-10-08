@@ -24,7 +24,7 @@ python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work
 | tracking | `ilp_solve.py` | tracksdata ILP with a per-node division cost `base - 16 * s` (base 6, sparse movies 5), then smoothing |
 | post-processing | `fork_verify.py`, `gapfill.py` | image-based fork verification; bridging of 1-2 frame gaps |
 | track gate | `dog_nodes.py`, `track_gate.py` | sparse movies: drop track segments not supported by 3D Net-64 / a sensitive DoG detector |
-| orchestration | `downstream.py` | everything after detection |
+| orchestration | `kaggle_notebook.py`, `run_pipeline.py`, `downstream.py` | the whole run (Kaggle / local); `downstream.py` runs everything between detection and the track gate |
 | shared | `common.py` | constants, greedy linking, track smoothing, CSV rows |
 
 ## Models (`inference/models/`)
@@ -32,7 +32,7 @@ python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work
 | file | model | training data |
 |---|---|---|
 | `net3d_128.pt` | 3D Net, XY-pooled by 2 (128 x 128 grid) | ground-truth nodes only; weights averaged over epochs 7-10 |
-| `net3d_128_pl.pt` | same architecture | ground truth + pseudo-labels (out-of-fold detections, plus an external Zebrahub embryo) |
+| `net3d_128_pl.pt` | same architecture | ground truth + pseudo-labels (out-of-fold detections, plus 102 windows of the external Ultrack `zebrafish_embryo` volume) |
 | `net3d_64.pt` | same architecture, XY-pooled by 4 | ground truth only; independent support detector for sparse movies |
 | `edge_transformer/` | temporal U-Net + node transformer link scorer | all training movies |
 | `cell_embedding.pt` | small 3D CNN, contrastive (InfoNCE) | pairs of the same nucleus in consecutive frames |
@@ -40,10 +40,11 @@ python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work
 | `division_cnn/` | 6 division CNNs (3 seeds, with and without copy-paste augmentation) | annotated mothers vs. annotated non-dividing cells |
 | `division_cat.cbm` | CatBoost node division model | out-of-fold graphs |
 | `division_pair/` | LightGBM + CatBoost pair model | out-of-fold graphs |
-| `fork_verifier/a`, `b` | two CatBoost fork verifiers (averaged) + sigmoid calibration | forks of the out-of-fold ILP solution |
+| `fork_verifier/a`, `b` | two CatBoost fork verifiers (averaged) + sigmoid calibration | 152 forks of an out-of-fold tracking run, 2,034 annotated division / non-division events and 409 hand labels (`training/README.md`, section 5a) |
 
-Division labels come only from annotated tracks (two children = positive, one child = negative); unannotated nodes are
-never used as negatives, because most real divisions are unannotated.
+For the division CNNs and the CatBoost node model, labels come only from annotated tracks (two children = positive, one
+child = negative); unannotated nodes are never used as negatives there, because most real divisions are unannotated. The
+pair model also uses 200 random non-mother nodes per movie as negatives (`training/README.md`, section 4).
 
 ## Acknowledgements and licences
 

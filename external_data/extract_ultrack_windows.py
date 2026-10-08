@@ -96,7 +96,6 @@ def main() -> None:
             print(f"  [t0={t0}] all {len(gw)} done")
             continue
         t_start = time.time()
-        n = int(round(BOX_UM / COMPETITION_SCALE[0]))          # 64 in z
         plans = {}
         for w in todo:
             o = np.array(w["origin_um"], float)

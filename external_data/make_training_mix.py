@@ -6,7 +6,8 @@ Creates symlinks only (no copies):
   <out>/pseudo/  pseudo-labels of both parts (<id>.npz from make_pseudo_labels.py)
 
     python external_data/make_training_mix.py --train data/train --external data/ultrack_windows \
-        --pseudo-train work/pseudo_oof --pseudo-external work/pseudo_ultrack --out data/mix
+        --pseudo-train data/pseudo_labels/pseudo_oof --pseudo-external data/pseudo_labels/pseudo_ultrack \
+        --out data/mix
 """
 import argparse
 import os

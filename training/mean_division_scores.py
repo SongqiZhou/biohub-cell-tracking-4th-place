@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Average node division scores (<movie>.divscore.npz: keys (t, z, y, x), score) of several division CNN ensembles.
 
-    python training/mean_division_scores.py --inputs work/div/cnn_plain,work/div/cnn_paste --out work/div/div_cnn
+    python training/mean_division_scores.py --inputs work/div/div_cnn_plain,work/div/div_cnn_paste --out work/div/div_cnn
 """
 import argparse
 import glob

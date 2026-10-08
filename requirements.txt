@@ -12,7 +12,7 @@ aiohttp==3.14.3        # remote zarr reads (download of the external data)
 lightgbm==4.7.0
 catboost==1.2.10
 polars==1.42.0
-pyscipopt==6.2.1
+pyscipopt==6.2.1       # SCIP, the ILP backend of tracksdata (not imported directly)
 ilpy==0.6.0
 tracksdata==0.1.0rc9   # the ILP solver interface; the Kaggle notebook installs it from the public support-pack wheels
-tqdm==4.70.0
+tqdm==4.70.0           # used by the baseline's edge transformer trainer (training/edge_transformer)

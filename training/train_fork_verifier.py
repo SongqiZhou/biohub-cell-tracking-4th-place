@@ -10,7 +10,7 @@ Writes <out>/{a,b}/model.cbm and calibration.json.
 --all-movies trains both verifiers on all movies instead (a and b differ only in the random seed), with the calibration
 from three inner models on thirds of the movies. Without hand labels this is the better choice (use drop threshold 0.40).
 
-    python training/train_fork_verifier.py --rows work/fork/rows --out models/fork_verifier
+    python training/train_fork_verifier.py --rows work/fork_released/rows --out models/fork_verifier
 """
 import argparse
 import glob

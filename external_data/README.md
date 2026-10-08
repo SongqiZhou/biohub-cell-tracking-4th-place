@@ -50,21 +50,23 @@ kaggle datasets download songqizhou/biohub-4th-place-pseudo-labels -p data/pseud
 # 1. download the 102 windows in the competition format (~39 GB on disk)
 python external_data/extract_ultrack_windows.py --out-dir data/ultrack_windows --workers 6
 
-# 2. detect nuclei with the ground-truth-only 3D Net (the deployed 3D Net-128), same settings as at inference
+# 2. detect nuclei with the ground-truth-only 3D Net (the deployed 3D Net-128); inference settings, without the refinement
 python inference/detect.py --data-dir data/ultrack_windows --vec inference/models/net3d_128.pt \
     --thr 0.97 --nms-adapt 4,7,10 --out work/ultrack_nodes
 
 # 3. detections -> pseudo-labels (greedy linking, tracks of >= 3 nodes, line-fit smoothing)
 python external_data/make_pseudo_labels.py work/ultrack_nodes work/pseudo_ultrack
 
-# 4. merge with the competition movies and their out-of-fold pseudo-labels
+# 4. merge with the competition movies and their out-of-fold pseudo-labels (ours, from step 0)
 python external_data/make_training_mix.py --train data/train --external data/ultrack_windows \
-    --pseudo-train work/pseudo_oof --pseudo-external work/pseudo_ultrack --out data/mix
+    --pseudo-train data/pseudo_labels/pseudo_oof --pseudo-external data/pseudo_labels/pseudo_ultrack \
+    --out data/mix
 ```
 
-The competition pseudo-labels (`work/pseudo_oof`) are the out-of-fold detections of the five fold models of
-3D Net-128 on the 199 training movies, passed through the same `make_pseudo_labels.py`. The external windows are
-labelled once, by the final 3D Net-128; there is no iterative self-training.
+With regenerated pseudo-labels, step 4 takes `work/pseudo_oof` (made by `training/run_net3d.sh`) and `work/pseudo_ultrack`
+and writes `data/mix_regenerated`. The competition pseudo-labels (`pseudo_oof/`) are the out-of-fold detections of the
+five fold models of 3D Net-128 on the 199 training movies, passed through the same `make_pseudo_labels.py`. The external
+windows are labelled once, by the final 3D Net-128; there is no iterative self-training.
 
 Steps 2 and 3 reproduce our pseudo-labels exactly (checked file by file) when run with our 3D Net-128 weights.
 
