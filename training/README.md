@@ -50,7 +50,8 @@ was unchanged (0.96251 vs 0.96234) while the public score dropped from 0.96987 t
 time into the released weights put the drop in the 3D Nets; end-to-end runs on 28 windows of four unseen Zebrahub
 embryos, scored against their Ultrack tracks, put it in 3D Net-128-PL: trained on regenerated pseudo-labels it scores
 0.002 lower than the released model, trained with the same code on the released pseudo-labels it matches it (0.6015 vs
-0.6013). This is why the released pseudo-labels are the default.
+0.6013). This is why the released pseudo-labels are the default. Even then a retrained 3D Net-128-PL moves the leaderboard
+score by a few thousandths (section 6).
 
 Files:
 
@@ -72,7 +73,8 @@ differs from the 128 models only in the grid and the number of epochs. The out-o
 reproduces our files exactly, up to one node in 60,000 that moves by one voxel through non-deterministic GPU
 reductions. Retraining will not give bit-identical weights (GPU non-determinism), only the same recipe. On the released
 pseudo-labels, 3D Net-128-PL trained with this code follows the loss curve of ours (0.6843 / 0.5661 / … / 0.5039 per
-epoch against 0.6864 / 0.5688 / … / 0.5052).
+epoch against 0.6864 / 0.5688 / … / 0.5052), and so does a rerun of the training code we used during the competition, with
+the same settings and seed (0.6850 / 0.5683 / … / 0.5047).
 
 ## 2. Linking: cell embedding and edge model
 
@@ -133,7 +135,7 @@ division features are identical to ours, and refitting the division CatBoost rep
 the pair model, the training table (labels and all 261 features) is identical to ours for the same negatives. The
 negatives of the deployed model were drawn with a per-movie seed taken from Python's randomised string hash, which
 cannot be recovered; the script seeds them with the CRC32 of the movie name instead, so a retrained pair model differs
-from the deployed one by its negative sample.
+from the deployed one by its negative sample (on the leaderboard: +0.0007 public, −0.0027 private; section 6).
 
 ## 5. Fork verifier
 
@@ -191,3 +193,31 @@ without hand labels the calibrated scores are higher, and 0.40 removes about as 
 The verifier features are the image traces of `inference/fork_verify.py`
 (117 separation / peak / displacement features and 40 separation-trend features); the official division score comes from
 the baseline package installed for the edge transformer (`tracking_cellmot.division_metrics`).
+
+## 6. What to expect from a retrain
+
+Retraining follows our recipes but does not give our weights: GPU training is not bit-reproducible, and single models
+change the leaderboard score by a few thousandths. Late submissions with retrained models, all run with the released
+inference code and settings:
+
+| models | public | private |
+|---|---|---|
+| released weights (final submission) | 0.96987 | 0.96234 |
+| all retrained from scratch with this repository, pseudo-labels regenerated (`PSEUDO=regenerate`) | 0.96093 | 0.96251 |
+| as above, but 3D Net-128-PL retrained on the released pseudo-labels (close to the default flow; the downstream models were still trained on nodes refined by the other 3D Net-128-PL) | 0.96335 | 0.96397 |
+| released weights, the three 3D Nets replaced by the from-scratch ones | 0.95902 | 0.95946 |
+| released weights, the linking models (edge transformer, cell embedding, edge model) replaced | 0.96925 | 0.96328 |
+| released weights, the division models (CNNs, CatBoost, pair model) replaced | 0.96767 | 0.96087 |
+| released weights, 3D Net-128-PL retrained with this repository on the released pseudo-labels | 0.96865 | 0.95955 |
+| released weights, 3D Net-128-PL retrained with the training code we used during the competition, on the same pseudo-labels with the same settings and seed | 0.96346 | 0.96173 |
+| released weights, pair model refitted on our training inputs (only the negative sample differs, section 4) | 0.97058 | 0.95966 |
+
+- The two retrains of 3D Net-128-PL on the same data differ by 0.0052 on the public and 0.0022 on the private
+  leaderboard, in opposite directions. Their loss curves both follow ours to within 0.003 per epoch, and on the unseen
+  Zebrahub check of section 1 both match the released model (0.6015 and 0.6008 vs 0.6013). The competition code does not
+  score better than this repository; the spread is training noise.
+- A different random negative sample for the pair model alone moves the private score by 0.0027.
+- Over the eight submissions with retrained models, the public score is on average 0.0045 below the final submission
+  (lower in 7 of 8) and the private score 0.0010 below (higher in 3 of 8). The final submission was chosen by its public
+  score, so that score is a favourable draw. A full retrain should land in the range above: about 0.959–0.971 public and
+  0.959–0.964 private.

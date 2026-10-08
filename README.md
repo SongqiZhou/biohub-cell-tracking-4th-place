@@ -39,6 +39,13 @@ external windows, 6.8 M nodes) are released as the Kaggle dataset `songqizhou/bi
 training uses them by default: regenerated ones come from retrained detectors that are never bit-identical, and the
 pseudo-label 3D Net is sensitive to that (`training/README.md`, section 1).
 
+## Reproducing the scores
+
+The inference pipeline with the released weights reproduces our final submission. Retraining follows the same recipes
+but not to the bit (GPU non-determinism), and single retrained models move the leaderboard score by a few thousandths:
+in our late submissions with retrained models the scores were 0.959–0.971 public and 0.959–0.964 private. Details in
+`training/README.md`, section 6.
+
 ## Hand labels
 
 The fork verifier of the final submission is also trained on 409 hand labels: candidate divisions in 39 training movies,
