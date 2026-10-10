@@ -31,7 +31,7 @@ competition data to a submission, are in `entry_points.md`.
 
 | run | hardware | time |
 |---|---|---|
-| competition (all models of the final submission) | Ubuntu 24.04, 256 CPU threads, 1 TB RAM, 8 × NVIDIA L40S (48 GB); 3D Net-64 on one NVIDIA H100 | — |
+| competition (all models of the final submission) | Ubuntu 24.04, 2 × AMD EPYC 9554 (128 cores), 1 TB RAM, 8 × NVIDIA L40S (48 GB); 3D Net-64 on one NVIDIA H100 | — |
 | from-scratch retrain with this repository (`GPUS="0 1 2 3" bash training/train_all.sh`) | Linux, 4 × NVIDIA H100 | about 15 h |
 | inference (the Kaggle notebook) | Kaggle, 2 × T4 | about 31 min for the 4 visible test movies |
 
@@ -42,7 +42,15 @@ competition data to a submission, are in `entry_points.md`.
 - **Network (training only).** The edge transformer step clones the official baseline code from GitHub, and the 3D Net
   step downloads the 102 external windows from the public Ultrack bucket (about 115 GB of reads). Inference runs
   offline.
+- **Kaggle image.** The notebook runs on the Kaggle image pinned in its metadata,
+  `gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461`.
 - Run time per training step: `training/README.md`, "Run time".
+- **Side effects.** Training writes `data/` (training sets, external windows), `work/`, `runs/` and `models/` at the
+  repository root, overwriting earlier outputs there, clones the official baseline into `baseline/` and installs it into
+  the active Python environment (`pip install -e`). Inference writes only to its `--work` directory.
+- **Key assumptions.** All commands run from the repository root; the competition training movies (`*.zarr` + `*.geff`)
+  are in `data/train`, test movies (`*.zarr`) in the directory given to `--test`, and the trained models in
+  `inference/models/` in the layout of the Kaggle dataset; a Linux machine with an NVIDIA driver for CUDA ≥ 12.6.
 
 `tracksdata` is used through its ILP interface. The Kaggle notebook installs it, together with `zarr`, SCIP and a recent
 `polars`, from the public `biohub-tracking-support-pack` wheels (a development build, 0.1.0rc6.dev3); locally we used
