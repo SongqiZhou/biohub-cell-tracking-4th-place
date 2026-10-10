@@ -29,6 +29,21 @@ No local evaluation is run. `GPUS="0 1 2 3" bash training/train_all.sh` spreads 
 fold models, the edge transformers, the per-fold detections, the division CNNs, ...) over these GPUs, one job per GPU at a
 time; the default is GPU 0 only.
 
+**Run time.** Wall clock of a from-scratch run on 4 × H100 (`GPUS="0 1 2 3"`), about 15 h in total. That run regenerated
+the pseudo-labels (`PSEUDO=regenerate`, which adds the detections for them to step 1); with the released pseudo-labels
+step 1 is shorter.
+
+| step | time |
+|---|---|
+| 1. 3D Nets (the external windows download meanwhile, about 4 h) | 6.7 h |
+| 2. edge transformers | 4.0 h |
+| 3. linking stage | 1.5 h |
+| 4. division models | 3.0 h |
+| 5. fork verifier | < 1 min |
+
+Single 3D Nets on one L40S: 3D Net-128 about 45 min (fold model) to 50 min (all movies) for 10 epochs, 3D Net-64 about
+1.8 h for 50 epochs, 3D Net-128-PL about 2 h for 10 epochs.
+
 ## 1. The three 3D Nets
 
 `run_net3d.sh` runs the whole sequence:

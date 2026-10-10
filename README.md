@@ -14,6 +14,7 @@ ILP, and a fork verifier, gap bridging and a track-support gate for sparse movie
 | `inference/` | the complete inference pipeline (detection → linking → divisions → ILP → post-processing); see `inference/README.md` |
 | `external_data/` | the external data we used, how much, and how it was downloaded, pseudo-labelled and merged; see `external_data/README.md` |
 | `training/` | training code for every model (3D Nets, edge transformer, cell embedding, edge model, division models, fork verifier); `training/train_all.sh` runs it end to end; see `training/README.md` |
+| `entry_points.md`, `SETTINGS.json`, `directory_structure.txt` | the commands from raw data to submission, the paths the scripts use, and the folder layout |
 
 ## Quick start (inference)
 
@@ -23,7 +24,25 @@ pip install -r requirements.txt
 python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work/run   # -> work/run/submission.csv
 ```
 
-On Kaggle (2 × T4) the whole pipeline takes about 31 minutes on the 4 visible test movies.
+On Kaggle (2 × T4) the whole pipeline takes about 31 minutes on the 4 visible test movies. All commands, from the raw
+competition data to a submission, are in `entry_points.md`.
+
+## Environment and run time
+
+| run | hardware | time |
+|---|---|---|
+| competition (all models of the final submission) | Ubuntu 24.04, 256 CPU threads, 1 TB RAM, 8 × NVIDIA L40S (48 GB); 3D Net-64 on one NVIDIA H100 | — |
+| from-scratch retrain with this repository (`GPUS="0 1 2 3" bash training/train_all.sh`) | Linux, 4 × NVIDIA H100 | about 15 h |
+| inference (the Kaggle notebook) | Kaggle, 2 × T4 | about 31 min for the 4 visible test movies |
+
+- **Software.** Python 3.12, PyTorch 2.13 with the CUDA 12.6 wheels (NVIDIA driver for CUDA ≥ 12.6), the versions in
+  `requirements.txt`. The 3D Nets train with bf16 autocast (batch 4); GPUs with less than 48 GB were not tested.
+- **Disk.** Competition training data 81 GB, external windows 39 GB, checkpoints about 7 GB, plus intermediate files in
+  `work/`.
+- **Network (training only).** The edge transformer step clones the official baseline code from GitHub, and the 3D Net
+  step downloads the 102 external windows from the public Ultrack bucket (about 115 GB of reads). Inference runs
+  offline.
+- Run time per training step: `training/README.md`, "Run time".
 
 `tracksdata` is used through its ILP interface. The Kaggle notebook installs it, together with `zarr`, SCIP and a recent
 `polars`, from the public `biohub-tracking-support-pack` wheels (a development build, 0.1.0rc6.dev3); locally we used

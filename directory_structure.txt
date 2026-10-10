@@ -1,0 +1,88 @@
+biohub-cell-tracking-4th-place/
+├── external_data/
+│   ├── extract_ultrack_windows.py
+│   ├── make_pseudo_labels.py
+│   ├── make_training_mix.py
+│   ├── README.md
+│   ├── ultrack_windows.json
+│   └── zarr_io.py
+├── inference/
+│   ├── candidates.py
+│   ├── cell_embedding.py
+│   ├── common.py
+│   ├── detect.py
+│   ├── division_cat.py
+│   ├── division_cnn.py
+│   ├── division_features.py
+│   ├── division_pair.py
+│   ├── dog_nodes.py
+│   ├── dog_route.py
+│   ├── dog_tracker.py
+│   ├── downstream.py
+│   ├── edge_features.py
+│   ├── edge_model.py
+│   ├── edge_transformer.py
+│   ├── fork_verify.py
+│   ├── gapfill.py
+│   ├── ilp_solve.py
+│   ├── kaggle_notebook.py
+│   ├── LICENSE-baseline.txt
+│   ├── net3d.py
+│   ├── nodes_table.py
+│   ├── README.md
+│   ├── run_pipeline.py
+│   ├── tf_edges.py
+│   └── track_gate.py
+├── training/
+│   ├── edge_transformer/
+│   │   ├── baseline.patch
+│   │   ├── run.sh
+│   │   └── splits.json
+│   ├── fork_verifier/
+│   │   ├── events.npz
+│   │   ├── hand_labels.csv
+│   │   └── motion.npz
+│   ├── average_checkpoints.py
+│   ├── candidate_graphs.py
+│   ├── division_patches.py
+│   ├── fit_division_cat.py
+│   ├── fit_edge_model.py
+│   ├── fold_movies.py
+│   ├── folds.json
+│   ├── fork_rows.py
+│   ├── fork_verifier_rows.py
+│   ├── gpus.sh
+│   ├── link_labels.py
+│   ├── mean_division_scores.py
+│   ├── net3d_data.py
+│   ├── pseudo_labels.sha256
+│   ├── README.md
+│   ├── run_division.sh
+│   ├── run_fork.sh
+│   ├── run_link.sh
+│   ├── run_net3d.sh
+│   ├── train_all.sh
+│   ├── train_cell_embedding.py
+│   ├── train_division_cnn.py
+│   ├── train_division_pair.py
+│   ├── train_fork_verifier.py
+│   └── train_net3d.py
+├── directory_structure.txt
+├── entry_points.md
+├── LICENSE
+├── README.md
+├── requirements.txt
+└── SETTINGS.json
+
+Created by the scripts or by hand (not in git):
+data/
+    train/              competition training movies (*.zarr + *.geff)
+    test/               competition test movies
+    pseudo_labels/      our pseudo-labels (Kaggle dataset biohub-4th-place-pseudo-labels)
+    ultrack_windows/    the 102 external windows
+    mix/                training set of the pseudo-label 3D Net
+baseline/               the official baseline code, cloned by training/edge_transformer/run.sh
+runs/                   training checkpoints
+work/                   intermediate files (out-of-fold detections, features, ...) and inference output
+models/                 trained models, in the layout inference/ loads
+inference/models/       the models inference uses (copied from models/, or from the Kaggle dataset biohub-4th-place-artifacts)

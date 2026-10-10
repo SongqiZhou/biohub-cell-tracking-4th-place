@@ -1,0 +1,14 @@
+{
+  "_note": "Paths used by the scripts, relative to the repository root. They are fixed in the scripts, except MODEL_DIR and PSEUDO_LABELS_DIR (environment variables MODELS and PSEUDO of training/train_all.sh) and TEST_DATA_DIR / SUBMISSION_DIR (--test and --work of inference/run_pipeline.py).",
+  "TRAIN_DATA_DIR": "data/train",
+  "TEST_DATA_DIR": "data/test",
+  "PSEUDO_LABELS_DIR": "data/pseudo_labels",
+  "EXTERNAL_DATA_DIR": "data/ultrack_windows",
+  "PSEUDO_LABEL_TRAINING_SET_DIR": "data/mix",
+  "BASELINE_CODE_DIR": "baseline",
+  "CHECKPOINT_DIR": "runs",
+  "INTERMEDIATE_DIR": "work",
+  "MODEL_DIR": "models",
+  "INFERENCE_MODEL_DIR": "inference/models",
+  "SUBMISSION_DIR": "work/run"
+}
