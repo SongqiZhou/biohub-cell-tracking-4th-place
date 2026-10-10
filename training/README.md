@@ -163,7 +163,7 @@ hand labels; the second one uses the official annotations only.
 
 ### 5a. Released verifier: annotations + hand labels
 
-`training/fork_verifier/` holds its training events:
+`training/fork_verifier/` holds the training events:
 
 | file | content |
 |---|---|
@@ -177,8 +177,9 @@ python training/train_fork_verifier.py --rows work/fork_released/rows --out mode
 ```
 
 Each of the two verifiers is trained on one half of the movies, without every fifth movie of that half, and calibrated
-on the out-of-fold scores of three inner models (each fitted on two thirds of the same movies). This reproduces the
-released weights exactly (identical predictions and calibration); they are used with the drop threshold 0.25.
+on the out-of-fold scores of three inner models (each fitted on two thirds of the same movies). Use these weights with the
+drop threshold 0.257 (`FORK_THR` in `inference/kaggle_notebook.py`, or `downstream.py --fork-thr 0.257`), which removes
+as many forks as the released weights at 0.25.
 `fork_verifier_rows.py --no-hand-labels` gives the same recipe without the hand labels.
 
 ### 5b. Official annotations only

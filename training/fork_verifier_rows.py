@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Training rows of the released fork verifier, rebuilt from the raw movies.
+"""Training rows of the fork verifier (annotations + hand labels), built from the raw movies.
 
-training/fork_verifier/ holds the events the released verifier was trained on:
+training/fork_verifier/ holds the training events:
   events.npz       forks of a tracking run on the out-of-fold node set, labelled by the competition's division score
                    (fork_*), and candidate mother / daughter-pair events labelled by the annotations (event_*):
                    mother frame t, the two daughter positions in frame t + 1 (um), label
@@ -13,7 +13,7 @@ Every event is traced in the raw images exactly as at inference (inference/fork_
 separation-trend features). Output <out>/<movie>.npz: X, y, kind (0 fork, 1 event), source (0 annotations, 1 hand label),
 the input of train_fork_verifier.py.
 
-    python training/fork_verifier_rows.py --data data/train --out work/fork_released/rows                    # released verifier
+    python training/fork_verifier_rows.py --data data/train --out work/fork_released/rows            # annotations + hand labels
     python training/fork_verifier_rows.py --data data/train --out work/fork_released/rows_nohand --no-hand-labels
 """
 import argparse
