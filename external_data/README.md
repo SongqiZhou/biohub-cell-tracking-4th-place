@@ -68,7 +68,7 @@ and writes `data/mix_regenerated`. The competition pseudo-labels (`pseudo_oof/`)
 five fold models of 3D Net-128 on the 199 training movies, passed through the same `make_pseudo_labels.py`. The external
 windows are labelled once, by the final 3D Net-128; there is no iterative self-training.
 
-Steps 2 and 3 reproduce our pseudo-labels exactly (checked file by file) when run with our 3D Net-128 weights.
+Steps 2 and 3 reproduce our pseudo-labels (checked file by file) when run with our 3D Net-128 weights, up to rare one-voxel shifts from non-deterministic GPU reductions.
 
 ## Notes
 

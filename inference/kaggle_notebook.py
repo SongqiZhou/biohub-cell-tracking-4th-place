@@ -17,8 +17,8 @@
 # 4. **Division prior.** A division CNN, a CatBoost node model and a mother-daughter pair model give every node a
 #    division score s; in the ILP each node's division cost is 6 - 16 s (5 - 16 s in sparse movies).
 # 5. **ILP** (tracksdata + SCIP), motion-compensated smoothing, fork verification and gap filling.
-# 6. **Track-support gate** (sparse movies only): track segments that neither a low-resolution 3D Net (3D Net-64) nor a
-#    sensitive DoG detector confirms are removed.
+# 6. **Track-support gate** (sparse movies only): track segments whose nodes a low-resolution 3D Net (3D Net-64) and a
+#    sensitive DoG detector do not confirm often enough are removed.
 
 # %%
 import glob

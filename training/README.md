@@ -41,7 +41,7 @@ step 1 is shorter.
 | 4. division models | 3.0 h |
 | 5. fork verifier | < 1 min |
 
-Single 3D Nets on one L40S: 3D Net-128 about 45 min (fold model) to 50 min (all movies) for 10 epochs, 3D Net-64 about
+Single 3D Nets on one L40S: 3D Net-128 about 41 min (fold model) to 52 min (all movies) for 10 epochs, 3D Net-64 about
 1.8 h for 50 epochs, 3D Net-128-PL about 2 h for 10 epochs.
 
 ## 1. The three 3D Nets
@@ -67,9 +67,7 @@ reproduces our files exactly, but retrained detectors are never bit-identical, a
 difference. In a from-scratch run with regenerated pseudo-labels (all other models retrained as well) the private score
 was unchanged (0.96251 vs 0.96234) while the public score dropped from 0.96987 to 0.96093. Swapping one model group at a
 time into the released weights put the drop in the 3D Nets; end-to-end runs on 28 windows of four unseen Zebrahub
-embryos, scored against their Ultrack tracks, put it in 3D Net-128-PL: trained on regenerated pseudo-labels it scores
-0.002 lower than the released model, trained with the same code on the released pseudo-labels it matches it (0.6015 vs
-0.6013). This is why the released pseudo-labels are the default. Even then a retrained 3D Net-128-PL moves the leaderboard
+embryos, scored against their Ultrack tracks, put it in 3D Net-128-PL: trained on regenerated pseudo-labels it scores 0.002 lower than the released model; trained with the same code on the released pseudo-labels, it matches it (0.6015 vs 0.6013). This is why the released pseudo-labels are the default. Even then a retrained 3D Net-128-PL moves the leaderboard
 score by a few thousandths (section 6).
 
 Files:
@@ -99,7 +97,7 @@ the same settings and seed (0.6850 / 0.5683 / … / 0.5047).
 
 The linker of the competition baseline (royerlab/kaggle-cell-tracking-competition, commit `075fc5f`, BSD-3), retrained
 with our folds. `edge_transformer/run.sh` clones the baseline, applies `edge_transformer/baseline.patch` and trains six
-models (6 epochs each, lr 1e-4, batch 8, window 2, 5 um pooling, brightness + flip augmentation, seed 314159):
+models (6 epochs each, lr 1e-4, batch 8, window 2, `--pool-kernel-um 5`, brightness + flip augmentation, seed 314159):
 
 | split in `edge_transformer/splits.json` | training movies | output |
 |---|---|---|
@@ -108,7 +106,7 @@ models (6 epochs each, lr 1e-4, batch 8, window 2, 5 um pooling, brightness + fl
 
 The weights of the last epoch are used. The patch changes nothing in the model or the loss; it only
 * seeds the global torch / numpy generators as well (model initialisation and dropout), not only the data order,
-* saves the weights of every epoch as `edge_predictor_last.pth` next to the baseline's "best" checkpoint,
+* saves the weights after every epoch to `edge_predictor_last.pth` (overwritten, so it holds the last epoch) next to the baseline's "best" checkpoint,
 * adds `--seed` and `--augment` to the command line.
 
 Run this before `run_link.sh` (section 3).
@@ -143,8 +141,7 @@ the linking stage's work directory (`work/link`).
 | 4 | pair model, on `work/link`: out-of-fold link probabilities of the edge model with and without the embedding column, out-of-fold scores of the plain CNNs, 200 random non-mother nodes per movie as negatives (`train_division_pair.py`) | `division_pair/` |
 
 The training inputs listed above are the ones the deployed models were trained with, including where they differ from the
-inference inputs (the 0.97 node set and the edge model without embedding for the CatBoost; plain-CNN scores for the pair
-model's graph features). `inference/division_pair.py` provides the triplet, embedding and link features to the trainer.
+inference inputs (the 0.97 node set and the edge model without embedding for the CatBoost; plain-CNN scores for the pair model's graph features and the edge model without embedding for its embedding features). `inference/division_pair.py` provides the triplet, embedding and link features to the trainer.
 
 **Checks.** The extracted patches are identical to ours. With deterministic cuDNN, the CNN training code gives the same
 weights as our original trainer, and the copy-paste synthesis the same patches; the deployed networks were trained without

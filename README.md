@@ -37,7 +37,7 @@ competition data to a submission, are in `entry_points.md`.
 
 - **Software.** Python 3.12, PyTorch 2.13 with the CUDA 12.6 wheels (NVIDIA driver for CUDA ≥ 12.6), the versions in
   `requirements.txt`. The 3D Nets train with bf16 autocast (batch 4); GPUs with less than 48 GB were not tested.
-- **Disk.** Competition training data 81 GB, external windows 39 GB, checkpoints about 7 GB, plus intermediate files in
+- **Disk.** Competition training data 81 GB, external windows 39 GB, checkpoints about 9 GB, plus intermediate files in
   `work/`.
 - **Network (training only).** The edge transformer step clones the official baseline code from GitHub, and the 3D Net
   step downloads the 102 external windows from the public Ultrack bucket (about 115 GB of reads). Inference runs
@@ -46,15 +46,13 @@ competition data to a submission, are in `entry_points.md`.
   `gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461`.
 - Run time per training step: `training/README.md`, "Run time".
 - **Side effects.** Training writes `data/` (training sets, external windows), `work/`, `runs/` and `models/` at the
-  repository root, overwriting earlier outputs there, clones the official baseline into `baseline/` and installs it into
-  the active Python environment (`pip install -e`). Inference writes only to its `--work` directory.
+  repository root, overwriting earlier outputs there, clones the official baseline into `baseline/` and installs it into the active Python environment (`pip install -e`); CatBoost writes `catboost_info/` in the working directory. Inference writes only to its `--work` directory.
 - **Key assumptions.** All commands run from the repository root; the competition training movies (`*.zarr` + `*.geff`)
   are in `data/train`, test movies (`*.zarr`) in the directory given to `--test`, and the trained models in
   `inference/models/` in the layout of the Kaggle dataset; a Linux machine with an NVIDIA driver for CUDA ≥ 12.6.
 
 `tracksdata` is used through its ILP interface. The Kaggle notebook installs it, together with `zarr`, SCIP and a recent
-`polars`, from the public `biohub-tracking-support-pack` wheels (a development build, 0.1.0rc6.dev3); locally we used
-0.1.0rc9 (`requirements.txt`), which gives byte-identical output.
+`polars`, from the public `biohub-tracking-support-pack` wheels (a development build, 0.1.0rc6.dev3); locally we used 0.1.0rc9 (`requirements.txt`).
 
 ## External data in one paragraph
 
@@ -69,7 +67,7 @@ pseudo-label 3D Net is sensitive to that (`training/README.md`, section 1).
 
 ## Reproducing the scores
 
-The inference pipeline with the released weights reproduces our final submission. Retraining follows the same recipes
+The inference pipeline with the released weights reproduces our final submission when run on Kaggle (2 × T4); on other GPUs floating-point differences can change a small part of the output (on an L40S, two of the four visible test movies differ in 0.05 % and 2 % of their nodes). Retraining follows the same recipes
 but not to the bit (GPU non-determinism): in our late submissions with retrained models or model groups the scores were
 0.959–0.971 public and 0.959–0.964 private, and a single retrained model moved them by up to about 0.006. Details in
 `training/README.md`, section 6.

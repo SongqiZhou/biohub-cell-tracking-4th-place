@@ -1,5 +1,7 @@
 """Edge transformer (inference only): a temporal 3D U-Net encodes two consecutive frames, features are sampled at the
 node positions, and a cross-attention node transformer scores every pair of nodes in the two frames.
+Re-implements the linker of the competition's official baseline (tracking-cellmot, BSD 3-Clause License, Copyright (c) 2026
+Thibaut Goldsborough); see LICENSE-baseline.txt.
 """
 from __future__ import annotations
 
