@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python inference/run_pipeline.py --test <dir with the *.zarr movies> --work work/run   # -> work/run/submission.csv
 ```
 
-On Kaggle (2 × T4) the whole pipeline takes about 31 minutes on the 4 visible test movies. All commands, from the raw
+On Kaggle (2 × T4) the whole pipeline takes about 30 minutes on the 4 visible test movies. All commands, from the raw
 competition data to a submission, are in `entry_points.md`.
 
 ## Environment and run time
@@ -33,7 +33,7 @@ competition data to a submission, are in `entry_points.md`.
 |---|---|---|
 | competition (all models of the final submission) | Ubuntu 24.04, 2 × AMD EPYC 9554 (128 cores), 1 TB RAM, 8 × NVIDIA L40S (48 GB); 3D Net-64 on one NVIDIA H100 | — |
 | from-scratch retrain with this repository (`GPUS="0 1 2 3" bash training/train_all.sh`) | Linux, 4 × NVIDIA H100 | about 15 h |
-| inference (the Kaggle notebook) | Kaggle, 2 × T4 | about 31 min for the 4 visible test movies |
+| inference (the Kaggle notebook) | Kaggle, 2 × T4 | about 30 min for the 4 visible test movies |
 
 - **Software.** Python 3.12, PyTorch 2.13 with the CUDA 12.6 wheels (NVIDIA driver for CUDA ≥ 12.6), the versions in
   `requirements.txt`. The 3D Nets train with bf16 autocast (batch 4); GPUs with less than 48 GB were not tested.
