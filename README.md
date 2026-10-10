@@ -70,8 +70,8 @@ pseudo-label 3D Net is sensitive to that (`training/README.md`, section 1).
 ## Reproducing the scores
 
 The inference pipeline with the released weights reproduces our final submission. Retraining follows the same recipes
-but not to the bit (GPU non-determinism), and single retrained models move the leaderboard score by a few thousandths:
-in our late submissions with retrained models the scores were 0.959–0.971 public and 0.959–0.964 private. Details in
+but not to the bit (GPU non-determinism): in our late submissions with retrained models or model groups the scores were
+0.959–0.971 public and 0.959–0.964 private, and a single retrained model moved them by up to about 0.006. Details in
 `training/README.md`, section 6.
 
 ## Hand labels
